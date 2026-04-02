@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Educators Portal - Advanced</title>
+    <title>Educators Portal - Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -20,22 +20,40 @@
 <body class="pb-24">
 
     <div id="app">
-        <!-- Loading -->
-        <div id="loading" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center">
-            <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <p class="mt-4 font-bold text-slate-600">Loading Portal...</p>
+        <!-- Loading State -->
+        <div id="loading" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center p-6 text-center">
+            <div id="loader-spinner" class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p id="loading-text" class="mt-4 font-bold text-slate-600">Connecting to Firebase...</p>
+            <div id="config-error" class="hidden mt-4 text-red-500 text-sm">
+                Error connecting to database. <br> Please check your internet or Firebase settings.
+            </div>
         </div>
 
         <!-- Login Section -->
         <div id="login-section" class="hidden min-h-screen flex items-center justify-center p-4">
             <div class="bg-white p-8 rounded-[32px] shadow-xl w-full max-w-md border border-slate-100">
-                <h2 class="text-3xl font-extrabold text-slate-800 text-center mb-8">Admin Login</h2>
-                <div id="login-error" class="hidden mb-4 p-3 bg-red-100 text-red-600 text-sm font-bold rounded-xl text-center"></div>
-                <input type="text" id="user-input" placeholder="User Name" class="w-full p-4 mb-4 bg-slate-50 rounded-2xl outline-none border-2 border-transparent focus:border-blue-500 font-bold">
-                <input type="password" id="pass-input" placeholder="Password" class="w-full p-4 mb-6 bg-slate-50 rounded-2xl outline-none border-2 border-transparent focus:border-blue-500 font-bold">
-                <button id="login-btn" onclick="performLogin()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-extrabold shadow-lg hover:bg-blue-700 transition-all flex justify-center items-center gap-2">
-                    <span>SIGN IN</span>
-                </button>
+                <div class="flex justify-center mb-6">
+                    <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-3xl font-black">E</div>
+                </div>
+                <h2 class="text-3xl font-extrabold text-slate-800 text-center mb-2">Admin Login</h2>
+                <p class="text-slate-400 text-center mb-8 font-medium">Enter your credentials to access portal</p>
+                
+                <div id="login-error" class="hidden mb-4 p-4 bg-red-50 text-red-600 text-xs font-bold rounded-2xl text-center border border-red-100"></div>
+                
+                <div class="space-y-4">
+                    <div class="relative">
+                        <i data-lucide="user" class="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-400"></i>
+                        <input type="text" id="user-input" placeholder="Username" class="w-full p-4 pl-12 bg-slate-50 rounded-2xl outline-none border-2 border-transparent focus:border-blue-500 font-bold transition-all">
+                    </div>
+                    <div class="relative">
+                        <i data-lucide="lock" class="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-400"></i>
+                        <input type="password" id="pass-input" placeholder="Password" class="w-full p-4 pl-12 bg-slate-50 rounded-2xl outline-none border-2 border-transparent focus:border-blue-500 font-bold transition-all">
+                    </div>
+                    <button id="login-btn" onclick="performLogin()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-extrabold shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all flex justify-center items-center gap-2">
+                        <span>SIGN IN</span>
+                    </button>
+                </div>
+                <p class="mt-6 text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">The Educator Management System</p>
             </div>
         </div>
 
@@ -44,9 +62,9 @@
             <header class="bg-white p-4 sticky top-0 z-30 shadow-sm flex justify-between items-center">
                 <div class="flex items-center gap-2">
                     <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">E</div>
-                    <span class="font-extrabold text-slate-800">The Educators Portal</span>
+                    <span class="font-extrabold text-slate-800">Educators Portal</span>
                 </div>
-                <button onclick="handleLogout()" class="text-red-500 p-2"><i data-lucide="log-out"></i></button>
+                <button onclick="handleLogout()" class="text-red-500 p-2 bg-red-50 rounded-xl"><i data-lucide="log-out" class="size-5"></i></button>
             </header>
 
             <!-- Tabs -->
@@ -57,7 +75,6 @@
             </div>
 
             <main class="p-4 max-w-2xl mx-auto">
-                <!-- Home Content -->
                 <div id="content-home" class="space-y-4">
                     <div class="relative">
                         <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-5"></i>
@@ -66,48 +83,51 @@
                     <div id="list-container" class="space-y-3"></div>
                 </div>
 
-                <!-- Import Content -->
                 <div id="content-import" class="hidden space-y-6">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="bg-white p-6 rounded-3xl text-center shadow-sm">
-                            <p class="text-xs font-bold text-slate-400 uppercase">Phone List</p>
-                            <h3 id="count-phone" class="text-2xl font-black text-blue-600">0</h3>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Phone Database</p>
+                            <h3 id="count-phone" class="text-3xl font-black text-blue-600">0</h3>
                         </div>
                         <div class="bg-white p-6 rounded-3xl text-center shadow-sm">
-                            <p class="text-xs font-bold text-slate-400 uppercase">Fee Records</p>
-                            <h3 id="count-fee" class="text-2xl font-black text-green-600">0</h3>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fee Records</p>
+                            <h3 id="count-fee" class="text-3xl font-black text-green-600">0</h3>
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-[32px] shadow-sm space-y-4">
-                        <h4 class="font-bold flex items-center gap-2"><i data-lucide="upload" class="size-4"></i> Upload Files</h4>
-                        <div class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center relative hover:bg-blue-50 transition-all">
-                            <input type="file" onchange="processFile(event, 'phone')" class="absolute inset-0 opacity-0 cursor-pointer">
-                            <i data-lucide="phone" class="mx-auto text-blue-400 mb-2"></i>
-                            <p class="text-sm font-bold">Import Phone List (Excel)</p>
-                        </div>
-                        <div class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center relative hover:bg-green-50 transition-all">
-                            <input type="file" onchange="processFile(event, 'fee')" class="absolute inset-0 opacity-0 cursor-pointer">
-                            <i data-lucide="file-text" class="mx-auto text-green-400 mb-2"></i>
-                            <p class="text-sm font-bold">Import Fee Report (Excel)</p>
+                    <div class="bg-white p-6 rounded-[32px] shadow-sm space-y-4 border border-slate-100">
+                        <h4 class="font-bold flex items-center gap-2"><i data-lucide="upload" class="size-4 text-blue-500"></i> Import Center</h4>
+                        <div class="grid grid-cols-1 gap-3">
+                            <div class="border-2 border-dashed border-slate-100 rounded-2xl p-6 text-center relative hover:bg-blue-50 transition-all">
+                                <input type="file" onchange="processFile(event, 'phone')" class="absolute inset-0 opacity-0 cursor-pointer">
+                                <i data-lucide="phone" class="mx-auto text-blue-400 mb-2"></i>
+                                <p class="text-sm font-bold text-slate-600">Import Phone List</p>
+                            </div>
+                            <div class="border-2 border-dashed border-slate-100 rounded-2xl p-6 text-center relative hover:bg-green-50 transition-all">
+                                <input type="file" onchange="processFile(event, 'fee')" class="absolute inset-0 opacity-0 cursor-pointer">
+                                <i data-lucide="file-text" class="mx-auto text-green-400 mb-2"></i>
+                                <p class="text-sm font-bold text-slate-600">Import Fee Report</p>
+                            </div>
                         </div>
                     </div>
 
-                    <button onclick="confirmDeleteAll()" class="w-full py-4 bg-red-100 text-red-600 rounded-2xl font-bold flex items-center justify-center gap-2">
-                        <i data-lucide="trash-2"></i> DELETE ALL DATA
+                    <button onclick="confirmDeleteAll()" class="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-bold flex items-center justify-center gap-2 border border-red-100">
+                        <i data-lucide="trash-2" class="size-4"></i> CLEAR ALL CLOUD DATA
                     </button>
                 </div>
 
-                <!-- Report Content -->
                 <div id="content-report" class="hidden space-y-6">
-                    <div class="bg-white p-6 rounded-[32px] shadow-sm">
-                        <h3 class="font-bold mb-4">Generate Call Logs Report</h3>
-                        <div class="flex gap-2 mb-4">
-                            <input type="month" id="report-month" class="flex-1 p-3 bg-slate-50 rounded-xl font-bold outline-none border border-slate-200">
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <button onclick="exportData('excel')" class="py-4 bg-green-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2"><i data-lucide="file-spreadsheet"></i> EXCEL</button>
-                            <button onclick="exportData('pdf')" class="py-4 bg-red-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2"><i data-lucide="file-text"></i> PDF</button>
+                    <div class="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100">
+                        <h3 class="font-bold mb-4 flex items-center gap-2"><i data-lucide="download" class="text-blue-500"></i> Export Logs</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Select Target Month</label>
+                                <input type="month" id="report-month" class="w-full mt-1 p-4 bg-slate-50 rounded-2xl font-bold outline-none border border-slate-100">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 pt-2">
+                                <button onclick="exportData('excel')" class="py-4 bg-green-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-100"><i data-lucide="file-spreadsheet"></i> EXCEL</button>
+                                <button onclick="exportData('pdf')" class="py-4 bg-red-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-red-100"><i data-lucide="file-text"></i> PDF</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -120,9 +140,9 @@
                 <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6" onclick="closeDrawer()"></div>
                 <div id="drawer-body"></div>
                 <div class="mt-6 border-t pt-6 space-y-4">
-                    <h4 class="font-bold text-sm uppercase text-slate-500">Interaction Remarks</h4>
-                    <textarea id="remark-box" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold border-2 border-transparent focus:border-blue-500 text-sm h-24" placeholder="Enter follow-up note..."></textarea>
-                    <button onclick="saveRemark()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold">SAVE REMARK</button>
+                    <h4 class="font-bold text-sm uppercase text-slate-500 flex items-center gap-2"><i data-lucide="message-square" class="size-4"></i> Add Interaction Note</h4>
+                    <textarea id="remark-box" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold border-2 border-transparent focus:border-blue-500 text-sm h-24 transition-all" placeholder="Enter follow-up note..."></textarea>
+                    <button onclick="saveRemark()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-100">SAVE REMARK</button>
                 </div>
                 <button onclick="closeDrawer()" class="w-full mt-4 py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold">CLOSE</button>
             </div>
@@ -131,89 +151,84 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, writeBatch, deleteDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // CONFIG & ID
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'the-educator-portal';
-        const initialToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // UPDATED WITH USER CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyCkD6oBY5RnndJ9EhyH18GqE4HlfuZ2ypE",
+            authDomain: "the-educator-portal.firebaseapp.com",
+            projectId: "the-educator-portal",
+            storageBucket: "the-educator-portal.firebasestorage.app",
+            messagingSenderId: "302946254780",
+            appId: "1:302946254780:web:e02b57a5feccc08421f5b9",
+            measurementId: "G-1C8WXBTPP3"
+        };
+        const appId = 'the-educator-portal';
 
         let db, auth, user;
         let phoneData = [], feeData = [], callLogs = [];
         let activeFamily = null;
         let syncUnsubscribers = [];
 
-        // AUTH & INIT
         const init = async () => {
-            if (!firebaseConfig.apiKey) return;
-            const app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-
             try {
-                if (initialToken) {
-                    await signInWithCustomToken(auth, initialToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (err) {
-                console.error("Authentication error:", err);
-            }
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
 
-            onAuthStateChanged(auth, (u) => {
-                if (u) {
-                    user = u;
-                    document.getElementById('loading').classList.add('hidden');
-                    document.getElementById('login-section').classList.remove('hidden');
-                    startSyncing();
-                }
-            });
+                // Start Auth
+                await signInAnonymously(auth);
+
+                onAuthStateChanged(auth, (u) => {
+                    if (u) {
+                        user = u;
+                        document.getElementById('loading').classList.add('hidden');
+                        document.getElementById('login-section').classList.remove('hidden');
+                        startSyncing();
+                    }
+                });
+            } catch (err) {
+                console.error("Init Error:", err);
+                document.getElementById('config-error').classList.remove('hidden');
+            }
             lucide.createIcons();
         };
 
         window.performLogin = async () => {
-            const uInput = document.getElementById('user-input').value;
-            const pInput = document.getElementById('pass-input').value;
+            const uInput = document.getElementById('user-input').value.trim();
+            const pInput = document.getElementById('pass-input').value.trim();
             const errorDiv = document.getElementById('login-error');
             const loginBtn = document.getElementById('login-btn');
             
-            errorDiv.classList.add('hidden');
             if (!uInput || !pInput) return;
 
+            errorDiv.classList.add('hidden');
             loginBtn.disabled = true;
             loginBtn.innerHTML = `<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>`;
 
             try {
-                // Firestore se user dhoondna
                 const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', uInput);
                 const userDoc = await getDoc(userDocRef);
 
-                let isAuthenticated = false;
-
+                let authenticated = false;
                 if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    if (userData.password === pInput) {
-                        isAuthenticated = true;
-                    }
+                    if (userDoc.data().password === pInput) authenticated = true;
                 } else if (uInput === 'admin' && pInput === 'admin123') {
-                    // Agar koi user database mein nahi, to default admin se entry allow karein
-                    // Aur foran database mein save kar dein taake aindah use ho sake
                     await setDoc(userDocRef, { username: 'admin', password: 'admin123', role: 'admin' });
-                    isAuthenticated = true;
+                    authenticated = true;
                 }
 
-                if (isAuthenticated) {
+                if (authenticated) {
                     document.getElementById('login-section').classList.add('hidden');
                     document.getElementById('main-section').classList.remove('hidden');
                     renderFamilyList();
                 } else {
-                    errorDiv.innerText = "Ghalat Username ya Password!";
+                    errorDiv.innerText = "Invalid credentials.";
                     errorDiv.classList.remove('hidden');
                 }
             } catch (err) {
-                console.error("Login Error:", err);
-                errorDiv.innerText = "System Error! Try again.";
+                errorDiv.innerText = "Connection failed.";
                 errorDiv.classList.remove('hidden');
             } finally {
                 loginBtn.disabled = false;
@@ -230,31 +245,28 @@
 
         const startSyncing = () => {
             syncUnsubscribers.forEach(unsub => unsub());
-            syncUnsubscribers = [];
             if (!user) return;
 
             const pRef = collection(db, 'artifacts', appId, 'public', 'data', 'phoneList');
             const fRef = collection(db, 'artifacts', appId, 'public', 'data', 'feeReport');
             const lRef = collection(db, 'artifacts', appId, 'public', 'data', 'callLogs');
 
-            const unsubPhone = onSnapshot(pRef, snap => {
+            syncUnsubscribers.push(onSnapshot(pRef, snap => {
                 phoneData = snap.docs.map(d => d.data());
                 document.getElementById('count-phone').innerText = phoneData.length;
                 renderFamilyList();
-            }, (err) => console.error("Phone Sync Error:", err));
+            }));
 
-            const unsubFee = onSnapshot(fRef, snap => {
+            syncUnsubscribers.push(onSnapshot(fRef, snap => {
                 feeData = snap.docs.map(d => d.data());
                 document.getElementById('count-fee').innerText = feeData.length;
                 renderFamilyList();
-            }, (err) => console.error("Fee Sync Error:", err));
+            }));
 
-            const unsubLogs = onSnapshot(lRef, snap => {
+            syncUnsubscribers.push(onSnapshot(lRef, snap => {
                 callLogs = snap.docs.map(d => d.data());
                 if (activeFamily) updateRemarksInDrawer();
-            }, (err) => console.error("Logs Sync Error:", err));
-
-            syncUnsubscribers.push(unsubPhone, unsubFee, unsubLogs);
+            }));
         };
 
         window.processFile = async (e, type) => {
@@ -274,10 +286,11 @@
                     
                     const collectionName = type === 'phone' ? 'phoneList' : 'feeReport';
                     const docRef = doc(db, 'artifacts', appId, 'public', 'data', collectionName, String(fCode));
+                    
                     batch.set(docRef, { ...item, familyCode: String(fCode), _type: type, syncTime: new Date().toISOString() });
                 });
                 await batch.commit();
-                alert(`${type.toUpperCase()} data synced!`);
+                alert(`${type.toUpperCase()} records uploaded.`);
             };
             reader.readAsBinaryString(file);
         };
@@ -289,38 +302,31 @@
             list.innerHTML = '';
 
             const allCodes = [...new Set([...phoneData.map(p => p.familyCode), ...feeData.map(f => f.familyCode)])];
-            const phoneCodesSet = new Set(phoneData.map(p => p.familyCode));
-            const feeCodesSet = new Set(feeData.map(f => f.familyCode));
-
-            allCodes.forEach(code => {
+            const filtered = allCodes.filter(code => {
                 const phone = phoneData.find(p => p.familyCode === code) || {};
                 const fee = feeData.find(f => f.familyCode === code) || {};
-                const name = fee['STUDENT NAME'] || phone['STUDENT NAME'] || 'No Name';
+                const name = (fee['STUDENT NAME'] || phone['STUDENT NAME'] || '').toLowerCase();
+                return code.includes(q) || name.includes(q);
+            });
+
+            filtered.slice(0, 50).forEach(code => {
+                const phone = phoneData.find(p => p.familyCode === code) || {};
+                const fee = feeData.find(f => f.familyCode === code) || {};
+                const name = fee['STUDENT NAME'] || phone['STUDENT NAME'] || 'Student ' + code;
                 
-                const isMatched = phoneCodesSet.has(code) && feeCodesSet.has(code);
-                const isSearching = q.length > 0;
-                const matchesSearch = code.includes(q) || name.toLowerCase().includes(q);
-
-                if (isSearching) {
-                    if (!matchesSearch) return;
-                } else {
-                    if (!isMatched) return; 
-                }
-
                 const div = document.createElement('div');
-                div.className = "bg-white p-5 rounded-3xl shadow-sm border border-slate-50 flex justify-between items-center cursor-pointer hover:border-blue-200 transition-all";
+                div.className = "bg-white p-5 rounded-3xl shadow-sm border border-slate-50 flex justify-between items-center cursor-pointer hover:border-blue-300 transition-all active:scale-[0.98]";
                 div.onclick = () => showDrawer(code);
                 div.innerHTML = `
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 ${isMatched ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'} rounded-2xl flex items-center justify-center font-black text-sm">${code}</div>
+                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-black text-xs">${code}</div>
                         <div>
-                            <p class="font-extrabold text-slate-800 text-sm">${name}</p>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">${fee['CLASS & SECTION'] || phone['CLASS & SECTION'] || 'N/A'}</p>
+                            <p class="font-extrabold text-slate-800 text-sm leading-tight">${name}</p>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">${fee['CLASS & SECTION'] || 'N/A'}</p>
                         </div>
                     </div>
                     <div class="text-right">
-                        <p class="text-xs font-black ${fee['ACTUAL FEE'] > 0 ? 'text-red-500' : 'text-green-500'}">${fee['ACTUAL FEE'] ? 'Rs. ' + fee['ACTUAL FEE'] : 'Fee N/A'}</p>
-                        <i data-lucide="chevron-right" class="size-4 text-slate-300 ml-auto mt-1"></i>
+                        <p class="text-xs font-black ${Number(fee['ACTUAL FEE']) > 0 ? 'text-red-500' : 'text-green-500'}">Rs. ${fee['ACTUAL FEE'] || 0}</p>
                     </div>
                 `;
                 list.appendChild(div);
@@ -333,47 +339,31 @@
             const fee = feeData.find(f => f.familyCode === code) || {};
             activeFamily = { code, phone, fee };
             
-            const body = document.getElementById('drawer-body');
-            body.innerHTML = `
+            document.getElementById('drawer-body').innerHTML = `
                 <div class="space-y-6">
                     <div class="flex justify-between items-start">
                         <div>
-                            <span class="px-3 py-1 bg-blue-100 text-blue-700 text-[10px] font-black rounded-lg">ID: ${code}</span>
-                            <h3 class="text-2xl font-black text-slate-800 mt-1">${fee['STUDENT NAME'] || phone['STUDENT NAME'] || 'N/A'}</h3>
+                            <span class="px-2 py-0.5 bg-blue-600 text-white text-[9px] font-black rounded-md">CODE: ${code}</span>
+                            <h3 class="text-2xl font-black text-slate-800 mt-2">${fee['STUDENT NAME'] || 'N/A'}</h3>
+                            <p class="text-slate-400 text-sm font-bold">${fee['CLASS & SECTION'] || 'N/A'}</p>
                         </div>
-                        <div class="text-right">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase">Fee Status</p>
-                            <p class="text-xl font-black ${fee['ACTUAL FEE'] > 0 ? 'text-red-600' : 'text-green-600'}">Rs. ${fee['ACTUAL FEE'] || 0}</p>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-slate-50 p-4 rounded-2xl">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase">Father Name</p>
-                            <p class="font-bold text-sm">${phone['FATHER NAME'] || fee['FAMILY NAME'] || 'N/A'}</p>
-                        </div>
-                        <div class="bg-slate-50 p-4 rounded-2xl">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase">Class</p>
-                            <p class="font-bold text-sm">${fee['CLASS & SECTION'] || phone['CLASS & SECTION'] || 'N/A'}</p>
+                        <div class="text-right bg-slate-50 p-3 rounded-2xl">
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Payable</p>
+                            <p class="text-xl font-black text-red-600">Rs. ${fee['ACTUAL FEE'] || 0}</p>
                         </div>
                     </div>
 
                     <div class="space-y-3">
                         ${phone['MOBILE'] ? `
                             <a href="tel:${phone['MOBILE']}" class="w-full bg-blue-600 text-white h-14 rounded-2xl flex items-center justify-center gap-3 font-bold shadow-lg shadow-blue-100">
-                                <i data-lucide="phone-call"></i> Call ${phone['MOBILE']}
+                                <i data-lucide="phone-call" class="size-5"></i> Call Parent (${phone['MOBILE']})
                             </a>
-                        ` : ''}
-                        ${phone['WHATSAPP'] ? `
-                            <a href="https://wa.me/${phone['WHATSAPP'].toString().replace(/\D/g,'')}" target="_blank" class="w-full bg-green-500 text-white h-14 rounded-2xl flex items-center justify-center gap-3 font-bold shadow-lg shadow-green-100">
-                                <i data-lucide="message-circle"></i> WhatsApp
-                            </a>
-                        ` : ''}
+                        ` : '<div class="p-4 bg-amber-50 text-amber-600 rounded-2xl text-center text-xs font-bold">No Number</div>'}
                     </div>
 
-                    <div class="mt-4">
-                        <h4 class="text-xs font-black uppercase text-slate-400 mb-3">Call History</h4>
-                        <div id="drawer-logs" class="space-y-2 max-h-40 overflow-y-auto"></div>
+                    <div>
+                        <h4 class="text-[10px] font-black uppercase text-slate-400 mb-3 tracking-widest">Logs</h4>
+                        <div id="drawer-logs" class="space-y-2"></div>
                     </div>
                 </div>
             `;
@@ -387,27 +377,26 @@
             if (!logsDiv || !activeFamily) return;
             const filtered = callLogs.filter(l => l.familyCode === activeFamily.code).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
             logsDiv.innerHTML = filtered.map(l => `
-                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <p class="text-xs font-bold text-slate-700">${l.remarks}</p>
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs font-bold text-slate-700">
+                    ${l.remarks}
                     <p class="text-[9px] text-slate-400 mt-1">${new Date(l.timestamp).toLocaleString()}</p>
                 </div>
-            `).join('') || '<p class="text-xs italic text-slate-400">No history found</p>';
+            `).join('') || '<p class="text-xs italic text-slate-400 text-center py-4">No history</p>';
         };
 
         window.saveRemark = async () => {
-            const r = document.getElementById('remark-box').value;
-            if (!r || !activeFamily || !user) return;
-            const logRef = doc(db, 'artifacts', appId, 'public', 'data', 'callLogs', Date.now().toString());
-            await setDoc(logRef, {
-                familyCode: activeFamily.code,
-                studentName: activeFamily.fee['STUDENT NAME'] || activeFamily.phone['STUDENT NAME'] || 'N/A',
-                fatherName: activeFamily.phone['FATHER NAME'] || activeFamily.fee['FAMILY NAME'] || 'N/A',
-                class: activeFamily.fee['CLASS & SECTION'] || 'N/A',
-                fee: activeFamily.fee['ACTUAL FEE'] || 0,
-                remarks: r,
-                timestamp: new Date().toISOString()
-            });
-            document.getElementById('remark-box').value = '';
+            const r = document.getElementById('remark-box').value.trim();
+            if (!r || !activeFamily) return;
+            
+            try {
+                const logRef = doc(db, 'artifacts', appId, 'public', 'data', 'callLogs', Date.now().toString());
+                await setDoc(logRef, {
+                    familyCode: activeFamily.code,
+                    remarks: r,
+                    timestamp: new Date().toISOString()
+                });
+                document.getElementById('remark-box').value = '';
+            } catch (err) { alert("Failed to save."); }
         };
 
         window.closeDrawer = () => {
@@ -415,39 +404,10 @@
             document.getElementById('drawer').classList.add('hidden');
         };
 
-        window.exportData = async (format) => {
-            const month = document.getElementById('report-month').value;
-            if (!month) return alert('Pehle month select karein!');
-            const filteredLogs = callLogs.filter(l => l.timestamp.startsWith(month));
-            if (filteredLogs.length === 0) return alert('Is month ki koi report nahi hai!');
-
-            if (format === 'excel') {
-                const ws = XLSX.utils.json_to_sheet(filteredLogs);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "CallReport");
-                XLSX.writeFile(wb, `Report_${month}.xlsx`);
-            } else {
-                const { jsPDF } = window.jspdf;
-                const docPdf = new jsPDF('l', 'mm', 'a4');
-                docPdf.text(`Call Logs Report - ${month}`, 14, 15);
-                const tableData = filteredLogs.map(l => [
-                    l.familyCode, l.studentName, l.fatherName, l.class, l.fee, l.timestamp.replace('T',' '), l.remarks
-                ]);
-                docPdf.autoTable({
-                    head: [['Code', 'Student', 'Father', 'Class', 'Fee', 'DateTime', 'Remarks']],
-                    body: tableData,
-                    startY: 20,
-                    theme: 'grid',
-                    styles: { fontSize: 8 }
-                });
-                docPdf.save(`Report_${month}.pdf`);
-            }
-        };
-
         window.setActiveTab = (tab) => {
             ['home', 'import', 'report'].forEach(t => {
                 document.getElementById(`content-${t}`).classList.add('hidden');
-                document.getElementById(`tab-${t}`).className = "flex-1 py-4 font-bold text-sm text-slate-500";
+                document.getElementById(`tab-${t}`).className = "flex-1 py-4 font-bold text-sm text-slate-400";
             });
             document.getElementById(`content-${tab}`).classList.remove('hidden');
             document.getElementById(`tab-${tab}`).className = "flex-1 py-4 font-bold text-sm tab-active";
@@ -455,8 +415,7 @@
         };
 
         window.confirmDeleteAll = async () => {
-            if (!confirm("Kya aap waqai sara data delete karna chahte hain?")) return;
-            if (!user) return;
+            if (!confirm("Delete all cloud data?")) return;
             const batch = writeBatch(db);
             const collections = ['phoneList', 'feeReport', 'callLogs'];
             for (let c of collections) {
@@ -464,7 +423,7 @@
                 q.forEach(d => batch.delete(d.ref));
             }
             await batch.commit();
-            alert("All data deleted!");
+            alert("Cleared.");
         };
 
         init();
