@@ -53,7 +53,6 @@
                         <span>SIGN IN</span>
                     </button>
                 </div>
-                <p class="mt-6 text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">The Educator Management System</p>
             </div>
         </div>
 
@@ -110,23 +109,17 @@
                             </div>
                         </div>
                     </div>
-
-                    <button onclick="confirmDeleteAll()" class="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-bold flex items-center justify-center gap-2 border border-red-100">
-                        <i data-lucide="trash-2" class="size-4"></i> CLEAR ALL CLOUD DATA
-                    </button>
+                    <button onclick="confirmDeleteAll()" class="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-bold flex items-center justify-center gap-2">Delete Cloud Data</button>
                 </div>
 
                 <div id="content-report" class="hidden space-y-6">
                     <div class="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100">
                         <h3 class="font-bold mb-4 flex items-center gap-2"><i data-lucide="download" class="text-blue-500"></i> Export Logs</h3>
                         <div class="space-y-4">
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Select Target Month</label>
-                                <input type="month" id="report-month" class="w-full mt-1 p-4 bg-slate-50 rounded-2xl font-bold outline-none border border-slate-100">
-                            </div>
+                            <p class="text-xs text-slate-400 font-medium italic">Reports will contain interaction logs for all families.</p>
                             <div class="grid grid-cols-2 gap-3 pt-2">
-                                <button onclick="exportData('excel')" class="py-4 bg-green-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-100"><i data-lucide="file-spreadsheet"></i> EXCEL</button>
-                                <button onclick="exportData('pdf')" class="py-4 bg-red-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-red-100"><i data-lucide="file-text"></i> PDF</button>
+                                <button onclick="exportData('excel')" class="py-4 bg-green-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg"><i data-lucide="file-spreadsheet"></i> EXCEL</button>
+                                <button onclick="exportData('pdf')" class="py-4 bg-red-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg"><i data-lucide="file-text"></i> PDF</button>
                             </div>
                         </div>
                     </div>
@@ -140,9 +133,9 @@
                 <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6" onclick="closeDrawer()"></div>
                 <div id="drawer-body"></div>
                 <div class="mt-6 border-t pt-6 space-y-4">
-                    <h4 class="font-bold text-sm uppercase text-slate-500 flex items-center gap-2"><i data-lucide="message-square" class="size-4"></i> Add Interaction Note</h4>
-                    <textarea id="remark-box" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold border-2 border-transparent focus:border-blue-500 text-sm h-24 transition-all" placeholder="Enter follow-up note..."></textarea>
-                    <button onclick="saveRemark()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-100">SAVE REMARK</button>
+                    <h4 class="font-bold text-sm uppercase text-slate-500 flex items-center gap-2"><i data-lucide="message-square" class="size-4"></i> Add Remark</h4>
+                    <textarea id="remark-box" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold border-2 border-transparent focus:border-blue-500 text-sm h-24" placeholder="Enter follow-up note..."></textarea>
+                    <button onclick="saveRemark()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg">SAVE REMARK</button>
                 </div>
                 <button onclick="closeDrawer()" class="w-full mt-4 py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold">CLOSE</button>
             </div>
@@ -154,7 +147,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // UPDATED WITH USER CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyCkD6oBY5RnndJ9EhyH18GqE4HlfuZ2ypE",
             authDomain: "the-educator-portal.firebaseapp.com",
@@ -176,10 +168,7 @@
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
-
-                // Start Auth
                 await signInAnonymously(auth);
-
                 onAuthStateChanged(auth, (u) => {
                     if (u) {
                         user = u;
@@ -189,7 +178,6 @@
                     }
                 });
             } catch (err) {
-                console.error("Init Error:", err);
                 document.getElementById('config-error').classList.remove('hidden');
             }
             lucide.createIcons();
@@ -198,55 +186,22 @@
         window.performLogin = async () => {
             const uInput = document.getElementById('user-input').value.trim();
             const pInput = document.getElementById('pass-input').value.trim();
-            const errorDiv = document.getElementById('login-error');
-            const loginBtn = document.getElementById('login-btn');
-            
-            if (!uInput || !pInput) return;
-
-            errorDiv.classList.add('hidden');
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = `<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>`;
-
-            try {
-                const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', uInput);
-                const userDoc = await getDoc(userDocRef);
-
-                let authenticated = false;
-                if (userDoc.exists()) {
-                    if (userDoc.data().password === pInput) authenticated = true;
-                } else if (uInput === 'admin' && pInput === 'admin123') {
-                    await setDoc(userDocRef, { username: 'admin', password: 'admin123', role: 'admin' });
-                    authenticated = true;
-                }
-
-                if (authenticated) {
-                    document.getElementById('login-section').classList.add('hidden');
-                    document.getElementById('main-section').classList.remove('hidden');
-                    renderFamilyList();
-                } else {
-                    errorDiv.innerText = "Invalid credentials.";
-                    errorDiv.classList.remove('hidden');
-                }
-            } catch (err) {
-                errorDiv.innerText = "Connection failed.";
-                errorDiv.classList.remove('hidden');
-            } finally {
-                loginBtn.disabled = false;
-                loginBtn.innerHTML = "<span>SIGN IN</span>";
+            if (uInput === 'admin' && pInput === 'admin123') {
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('main-section').classList.remove('hidden');
+                renderFamilyList();
+            } else {
+                alert("Invalid Login");
             }
         };
 
         window.handleLogout = () => {
-            document.getElementById('user-input').value = '';
-            document.getElementById('pass-input').value = '';
             document.getElementById('login-section').classList.remove('hidden');
             document.getElementById('main-section').classList.add('hidden');
         };
 
         const startSyncing = () => {
             syncUnsubscribers.forEach(unsub => unsub());
-            if (!user) return;
-
             const pRef = collection(db, 'artifacts', appId, 'public', 'data', 'phoneList');
             const fRef = collection(db, 'artifacts', appId, 'public', 'data', 'feeReport');
             const lRef = collection(db, 'artifacts', appId, 'public', 'data', 'callLogs');
@@ -271,26 +226,23 @@
 
         window.processFile = async (e, type) => {
             const file = e.target.files[0];
-            if (!file || !user) return;
-
+            if (!file) return;
             const reader = new FileReader();
             reader.onload = async (evt) => {
                 const data = evt.target.result;
                 const workbook = XLSX.read(data, { type: 'binary' });
                 const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                
                 const batch = writeBatch(db);
                 json.forEach(item => {
-                    const fCode = item['FAMILY CODE'] || item['FMLY #'] || item['FMLY#'] || item['familyCode'];
+                    // Universal field mapping for family code
+                    const fCode = String(item['FAMILY CODE'] || item['FMLY #'] || item['FMLY#'] || item['familyCode'] || '');
                     if (!fCode) return;
-                    
                     const collectionName = type === 'phone' ? 'phoneList' : 'feeReport';
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', collectionName, String(fCode));
-                    
-                    batch.set(docRef, { ...item, familyCode: String(fCode), _type: type, syncTime: new Date().toISOString() });
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', collectionName, fCode);
+                    batch.set(docRef, { ...item, familyCode: fCode, _type: type });
                 });
                 await batch.commit();
-                alert(`${type.toUpperCase()} records uploaded.`);
+                alert(`${type.toUpperCase()} imported.`);
             };
             reader.readAsBinaryString(file);
         };
@@ -301,27 +253,37 @@
             if (!list) return;
             list.innerHTML = '';
 
-            const allCodes = [...new Set([...phoneData.map(p => p.familyCode), ...feeData.map(f => f.familyCode)])];
-            const filtered = allCodes.filter(code => {
+            // LOGIC: Show only if exists in BOTH Phone List and Fee Report
+            const phoneCodes = new Set(phoneData.map(p => p.familyCode));
+            const commonCodes = feeData
+                .map(f => f.familyCode)
+                .filter(code => phoneCodes.has(code));
+
+            const filtered = commonCodes.filter(code => {
                 const phone = phoneData.find(p => p.familyCode === code) || {};
                 const fee = feeData.find(f => f.familyCode === code) || {};
                 const name = (fee['STUDENT NAME'] || phone['STUDENT NAME'] || '').toLowerCase();
                 return code.includes(q) || name.includes(q);
             });
 
-            filtered.slice(0, 50).forEach(code => {
-                const phone = phoneData.find(p => p.familyCode === code) || {};
-                const fee = feeData.find(f => f.familyCode === code) || {};
-                const name = fee['STUDENT NAME'] || phone['STUDENT NAME'] || 'Student ' + code;
+            if (filtered.length === 0) {
+                list.innerHTML = `<p class="text-center text-slate-400 py-10 font-bold">No common records found.</p>`;
+                return;
+            }
+
+            filtered.forEach(code => {
+                const phone = phoneData.find(p => p.familyCode === code);
+                const fee = feeData.find(f => f.familyCode === code);
+                const name = fee['STUDENT NAME'] || phone['STUDENT NAME'] || 'N/A';
                 
                 const div = document.createElement('div');
-                div.className = "bg-white p-5 rounded-3xl shadow-sm border border-slate-50 flex justify-between items-center cursor-pointer hover:border-blue-300 transition-all active:scale-[0.98]";
+                div.className = "bg-white p-5 rounded-3xl shadow-sm border border-slate-50 flex justify-between items-center cursor-pointer hover:border-blue-300 transition-all";
                 div.onclick = () => showDrawer(code);
                 div.innerHTML = `
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-black text-xs">${code}</div>
                         <div>
-                            <p class="font-extrabold text-slate-800 text-sm leading-tight">${name}</p>
+                            <p class="font-extrabold text-slate-800 text-sm">${name}</p>
                             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">${fee['CLASS & SECTION'] || 'N/A'}</p>
                         </div>
                     </div>
@@ -345,26 +307,16 @@
                         <div>
                             <span class="px-2 py-0.5 bg-blue-600 text-white text-[9px] font-black rounded-md">CODE: ${code}</span>
                             <h3 class="text-2xl font-black text-slate-800 mt-2">${fee['STUDENT NAME'] || 'N/A'}</h3>
-                            <p class="text-slate-400 text-sm font-bold">${fee['CLASS & SECTION'] || 'N/A'}</p>
                         </div>
                         <div class="text-right bg-slate-50 p-3 rounded-2xl">
-                            <p class="text-[9px] font-bold text-slate-400 uppercase">Payable</p>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Balance</p>
                             <p class="text-xl font-black text-red-600">Rs. ${fee['ACTUAL FEE'] || 0}</p>
                         </div>
                     </div>
-
-                    <div class="space-y-3">
-                        ${phone['MOBILE'] ? `
-                            <a href="tel:${phone['MOBILE']}" class="w-full bg-blue-600 text-white h-14 rounded-2xl flex items-center justify-center gap-3 font-bold shadow-lg shadow-blue-100">
-                                <i data-lucide="phone-call" class="size-5"></i> Call Parent (${phone['MOBILE']})
-                            </a>
-                        ` : '<div class="p-4 bg-amber-50 text-amber-600 rounded-2xl text-center text-xs font-bold">No Number</div>'}
-                    </div>
-
-                    <div>
-                        <h4 class="text-[10px] font-black uppercase text-slate-400 mb-3 tracking-widest">Logs</h4>
-                        <div id="drawer-logs" class="space-y-2"></div>
-                    </div>
+                    <a href="tel:${phone['MOBILE']}" class="w-full bg-blue-600 text-white h-14 rounded-2xl flex items-center justify-center gap-3 font-bold">
+                        <i data-lucide="phone-call" class="size-5"></i> Call Parent
+                    </a>
+                    <div id="drawer-logs" class="space-y-2"></div>
                 </div>
             `;
             updateRemarksInDrawer();
@@ -377,32 +329,22 @@
             if (!logsDiv || !activeFamily) return;
             const filtered = callLogs.filter(l => l.familyCode === activeFamily.code).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
             logsDiv.innerHTML = filtered.map(l => `
-                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs font-bold text-slate-700">
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs font-bold">
                     ${l.remarks}
                     <p class="text-[9px] text-slate-400 mt-1">${new Date(l.timestamp).toLocaleString()}</p>
                 </div>
-            `).join('') || '<p class="text-xs italic text-slate-400 text-center py-4">No history</p>';
+            `).join('') || '<p class="text-center text-slate-400 py-4 italic text-xs">No logs yet.</p>';
         };
 
         window.saveRemark = async () => {
             const r = document.getElementById('remark-box').value.trim();
             if (!r || !activeFamily) return;
-            
-            try {
-                const logRef = doc(db, 'artifacts', appId, 'public', 'data', 'callLogs', Date.now().toString());
-                await setDoc(logRef, {
-                    familyCode: activeFamily.code,
-                    remarks: r,
-                    timestamp: new Date().toISOString()
-                });
-                document.getElementById('remark-box').value = '';
-            } catch (err) { alert("Failed to save."); }
+            const logRef = doc(db, 'artifacts', appId, 'public', 'data', 'callLogs', Date.now().toString());
+            await setDoc(logRef, { familyCode: activeFamily.code, remarks: r, timestamp: new Date().toISOString() });
+            document.getElementById('remark-box').value = '';
         };
 
-        window.closeDrawer = () => {
-            activeFamily = null;
-            document.getElementById('drawer').classList.add('hidden');
-        };
+        window.closeDrawer = () => { document.getElementById('drawer').classList.add('hidden'); activeFamily = null; };
 
         window.setActiveTab = (tab) => {
             ['home', 'import', 'report'].forEach(t => {
@@ -414,16 +356,61 @@
             lucide.createIcons();
         };
 
-        window.confirmDeleteAll = async () => {
-            if (!confirm("Delete all cloud data?")) return;
-            const batch = writeBatch(db);
-            const collections = ['phoneList', 'feeReport', 'callLogs'];
-            for (let c of collections) {
-                const q = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', c));
-                q.forEach(d => batch.delete(d.ref));
+        // REPORT GENERATION LOGIC
+        window.exportData = (format) => {
+            if (callLogs.length === 0) { alert("No logs to export."); return; }
+
+            const reportRows = callLogs.map(log => {
+                const fee = feeData.find(f => f.familyCode === log.familyCode) || {};
+                const phone = phoneData.find(p => p.familyCode === log.familyCode) || {};
+                return {
+                    'Family Code': log.familyCode,
+                    'Student Name': fee['STUDENT NAME'] || phone['STUDENT NAME'] || 'N/A',
+                    'Class': fee['CLASS & SECTION'] || 'N/A',
+                    'Mobile': phone['MOBILE'] || 'N/A',
+                    'Fee Balance': fee['ACTUAL FEE'] || 0,
+                    'Interaction Log': log.remarks,
+                    'Date & Time': new Date(log.timestamp).toLocaleString()
+                };
+            });
+
+            if (format === 'excel') {
+                const ws = XLSX.utils.json_to_sheet(reportRows);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Interaction Logs");
+                XLSX.writeFile(wb, `Educator_Portal_Report_${Date.now()}.xlsx`);
+            } else if (format === 'pdf') {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('l', 'pt');
+                doc.text("Educators Portal - Interaction Logs", 40, 30);
+                
+                const headers = [['Code', 'Student Name', 'Class', 'Mobile', 'Fee', 'Remarks', 'Timestamp']];
+                const data = reportRows.map(r => [
+                    r['Family Code'], r['Student Name'], r['Class'], r['Mobile'], r['Fee Balance'], r['Interaction Log'], r['Date & Time']
+                ]);
+
+                doc.autoTable({
+                    head: headers,
+                    body: data,
+                    startY: 50,
+                    theme: 'grid',
+                    headStyles: { fillStyle: '#2563eb' }
+                });
+                doc.save(`Educator_Report_${Date.now()}.pdf`);
             }
-            await batch.commit();
-            alert("Cleared.");
+        };
+
+        window.confirmDeleteAll = async () => {
+            if (confirm("Permanently delete ALL data?")) {
+                const batch = writeBatch(db);
+                const colls = ['phoneList', 'feeReport', 'callLogs'];
+                for (let c of colls) {
+                    const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', c));
+                    snap.forEach(d => batch.delete(d.ref));
+                }
+                await batch.commit();
+                alert("Data Deleted.");
+            }
         };
 
         init();
