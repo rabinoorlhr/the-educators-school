@@ -1,419 +1,423 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Educators Portal - Fixed</title>
+    <title>School Fee & Contact Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
-        .tab-active { border-bottom: 3px solid #2563eb; color: #2563eb; }
-        .drawer-up { animation: slideUp 0.3s ease-out; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #f3f4f6; }
+        .detail-row { @apply flex justify-between items-center py-3 border-b border-gray-100 last:border-0; gap: 2rem; }
+        .detail-label { @apply text-emerald-800 text-[11px] font-black uppercase tracking-widest text-left shrink-0; min-width: 140px; } 
+        .detail-value { @apply text-blue-600 text-sm font-bold text-right break-words flex-1; padding-left: 2rem; }
+        .stat-card { @apply bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center; }
     </style>
 </head>
-<body class="pb-24">
+<body>
 
-    <div id="app">
-        <!-- Loading State -->
-        <div id="loading" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center p-6 text-center">
-            <div id="loader-spinner" class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <p id="loading-text" class="mt-4 font-bold text-slate-600">Connecting to Firebase...</p>
-            <div id="config-error" class="hidden mt-4 text-red-500 text-sm">
-                Error connecting to database. <br> Please check your internet or Firebase settings.
+<div id="app" class="min-h-screen">
+    <!-- Login Screen -->
+    <div id="login-screen" class="flex items-center justify-center min-h-screen bg-slate-900">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-96">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-extrabold text-slate-800">Admin Login</h2>
+                <p class="text-slate-500 mt-2">Apna Email aur Password darj karein</p>
             </div>
-        </div>
-
-        <!-- Login Section -->
-        <div id="login-section" class="hidden min-h-screen flex items-center justify-center p-4">
-            <div class="bg-white p-8 rounded-[32px] shadow-xl w-full max-w-md border border-slate-100">
-                <div class="flex justify-center mb-6">
-                    <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-3xl font-black">E</div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email / Username</label>
+                    <input type="text" id="username" placeholder="admin@school.com" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
-                <h2 class="text-3xl font-extrabold text-slate-800 text-center mb-2">Admin Login</h2>
-                <p class="text-slate-400 text-center mb-8 font-medium">Enter your credentials to access portal</p>
-                
-                <div id="login-error" class="hidden mb-4 p-4 bg-red-50 text-red-600 text-xs font-bold rounded-2xl text-center border border-red-100"></div>
-                
-                <div class="space-y-4">
-                    <div class="relative">
-                        <i data-lucide="user" class="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-400"></i>
-                        <input type="text" id="user-input" placeholder="Username" class="w-full p-4 pl-12 bg-slate-50 rounded-2xl outline-none border-2 border-transparent focus:border-blue-500 font-bold transition-all">
-                    </div>
-                    <div class="relative">
-                        <i data-lucide="lock" class="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-400"></i>
-                        <input type="password" id="pass-input" placeholder="Password" class="w-full p-4 pl-12 bg-slate-50 rounded-2xl outline-none border-2 border-transparent focus:border-blue-500 font-bold transition-all">
-                    </div>
-                    <button id="login-btn" onclick="performLogin()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-extrabold shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all flex justify-center items-center gap-2">
-                        <span>SIGN IN</span>
-                    </button>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="password" placeholder="••••••••" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
-            </div>
-        </div>
-
-        <!-- Dashboard Section -->
-        <div id="main-section" class="hidden">
-            <header class="bg-white p-4 sticky top-0 z-30 shadow-sm flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">E</div>
-                    <span class="font-extrabold text-slate-800">Educators Portal</span>
-                </div>
-                <button onclick="handleLogout()" class="text-red-500 p-2 bg-red-50 rounded-xl"><i data-lucide="log-out" class="size-5"></i></button>
-            </header>
-
-            <!-- Tabs -->
-            <div class="flex bg-white border-b border-slate-100 sticky top-[72px] z-30">
-                <button onclick="setActiveTab('home')" id="tab-home" class="flex-1 py-4 font-bold text-sm tab-active">Directory</button>
-                <button onclick="setActiveTab('import')" id="tab-import" class="flex-1 py-4 font-bold text-sm text-slate-500">Database</button>
-                <button onclick="setActiveTab('report')" id="tab-report" class="flex-1 py-4 font-bold text-sm text-slate-500">Reports</button>
-            </div>
-
-            <main class="p-4 max-w-2xl mx-auto">
-                <div id="content-home" class="space-y-4">
-                    <div class="relative">
-                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-5"></i>
-                        <input type="text" id="search-input" oninput="renderFamilyList()" placeholder="Search Code or Name..." class="w-full p-4 pl-12 bg-white rounded-2xl shadow-sm outline-none font-bold">
-                    </div>
-                    <div id="list-container" class="space-y-3"></div>
-                </div>
-
-                <div id="content-import" class="hidden space-y-6">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-white p-6 rounded-3xl text-center shadow-sm">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Phone Database</p>
-                            <h3 id="count-phone" class="text-3xl font-black text-blue-600">0</h3>
-                        </div>
-                        <div class="bg-white p-6 rounded-3xl text-center shadow-sm">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fee Records</p>
-                            <h3 id="count-fee" class="text-3xl font-black text-green-600">0</h3>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-[32px] shadow-sm space-y-4 border border-slate-100">
-                        <h4 class="font-bold flex items-center gap-2"><i data-lucide="upload" class="size-4 text-blue-500"></i> Import Center</h4>
-                        <div class="grid grid-cols-1 gap-3">
-                            <div class="border-2 border-dashed border-slate-100 rounded-2xl p-6 text-center relative hover:bg-blue-50 transition-all">
-                                <input type="file" onchange="processFile(event, 'phone')" class="absolute inset-0 opacity-0 cursor-pointer">
-                                <i data-lucide="phone" class="mx-auto text-blue-400 mb-2"></i>
-                                <p class="text-sm font-bold text-slate-600">Import Phone List</p>
-                            </div>
-                            <div class="border-2 border-dashed border-slate-100 rounded-2xl p-6 text-center relative hover:bg-green-50 transition-all">
-                                <input type="file" onchange="processFile(event, 'fee')" class="absolute inset-0 opacity-0 cursor-pointer">
-                                <i data-lucide="file-text" class="mx-auto text-green-400 mb-2"></i>
-                                <p class="text-sm font-bold text-slate-600">Import Fee Report</p>
-                            </div>
-                        </div>
-                    </div>
-                    <button onclick="confirmDeleteAll()" class="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-bold flex items-center justify-center gap-2">Delete Cloud Data</button>
-                </div>
-
-                <div id="content-report" class="hidden space-y-6">
-                    <div class="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100">
-                        <h3 class="font-bold mb-4 flex items-center gap-2"><i data-lucide="download" class="text-blue-500"></i> Export Logs</h3>
-                        <div class="space-y-4">
-                            <p class="text-xs text-slate-400 font-medium italic">Reports will contain interaction logs for all families.</p>
-                            <div class="grid grid-cols-2 gap-3 pt-2">
-                                <button onclick="exportData('excel')" class="py-4 bg-green-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg"><i data-lucide="file-spreadsheet"></i> EXCEL</button>
-                                <button onclick="exportData('pdf')" class="py-4 bg-red-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg"><i data-lucide="file-text"></i> PDF</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </main>
-        </div>
-
-        <!-- Detail Drawer -->
-        <div id="drawer" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] hidden flex items-end">
-            <div class="bg-white w-full rounded-t-[40px] p-6 max-h-[90vh] overflow-y-auto drawer-up shadow-2xl">
-                <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6" onclick="closeDrawer()"></div>
-                <div id="drawer-body"></div>
-                <div class="mt-6 border-t pt-6 space-y-4">
-                    <h4 class="font-bold text-sm uppercase text-slate-500 flex items-center gap-2"><i data-lucide="message-square" class="size-4"></i> Add Remark</h4>
-                    <textarea id="remark-box" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold border-2 border-transparent focus:border-blue-500 text-sm h-24" placeholder="Enter follow-up note..."></textarea>
-                    <button onclick="saveRemark()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg">SAVE REMARK</button>
-                </div>
-                <button onclick="closeDrawer()" class="w-full mt-4 py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold">CLOSE</button>
+                <button onclick="handleLogin()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition-all shadow-lg">Login</button>
+                <p id="login-error" class="text-red-500 mt-2 text-sm text-center hidden"></p>
             </div>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="hidden">
+        <nav class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center sticky top-0 z-40">
+            <div class="flex items-center gap-2">
+                <div class="bg-emerald-700 p-2 rounded-lg text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path d="M12 14l9-5-9-5-9 5 9 5z" />
+                        <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold text-gray-800 uppercase tracking-tight">The Educator Admin</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="user-display" class="text-sm text-gray-500 font-bold"></span>
+                <button onclick="handleLogout()" class="text-gray-400 hover:text-red-600 font-medium transition-colors">Logout</button>
+            </div>
+        </nav>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCkD6oBY5RnndJ9EhyH18GqE4HlfuZ2ypE",
-            authDomain: "the-educator-portal.firebaseapp.com",
-            projectId: "the-educator-portal",
-            storageBucket: "the-educator-portal.firebasestorage.app",
-            messagingSenderId: "302946254780",
-            appId: "1:302946254780:web:e02b57a5feccc08421f5b9",
-            measurementId: "G-1C8WXBTPP3"
-        };
-        const appId = 'the-educator-portal';
+        <div class="container mx-auto p-4 lg:p-8 space-y-6">
+            <!-- Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="stat-card">
+                    <span class="text-xs font-bold uppercase text-gray-400">Contacts</span>
+                    <span id="count-contacts" class="text-2xl font-black text-blue-600">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="text-xs font-bold uppercase text-gray-400">Fee Records</span>
+                    <span id="count-fees" class="text-2xl font-black text-emerald-600">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="text-xs font-bold uppercase text-gray-400">Call Logs</span>
+                    <span id="count-logs" class="text-2xl font-black text-purple-600">0</span>
+                </div>
+                <div class="stat-card bg-emerald-700 text-white shadow-lg">
+                    <span class="text-xs font-bold uppercase opacity-80">Full Report</span>
+                    <div class="flex gap-2 mt-1">
+                        <button onclick="downloadReport('excel')" class="text-[10px] font-bold underline">Excel</button>
+                        <span>|</span>
+                        <button onclick="downloadReport('pdf')" class="text-[10px] font-bold underline">PDF</button>
+                    </div>
+                </div>
+            </div>
 
-        let db, auth, user;
-        let phoneData = [], feeData = [], callLogs = [];
-        let activeFamily = null;
-        let syncUnsubscribers = [];
+            <!-- Import Section -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <div class="space-y-1">
+                    <h3 class="font-bold text-emerald-900 text-sm italic">1. Contact List (Excel)</h3>
+                    <input type="file" id="file-contacts" accept=".xlsx, .xls" class="block w-full text-[10px] text-gray-500 file:mr-2 file:py-2 file:px-3 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700">
+                </div>
+                <div class="space-y-1">
+                    <h3 class="font-bold text-emerald-900 text-sm italic">2. Fee Report (Excel)</h3>
+                    <input type="file" id="file-fees" accept=".xlsx, .xls" class="block w-full text-[10px] text-gray-500 file:mr-2 file:py-2 file:px-3 file:rounded-full file:border-0 file:bg-emerald-50 file:text-emerald-700">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="confirmDeleteAll(event)" class="w-full bg-red-50 text-red-600 py-2.5 rounded-xl text-xs font-bold hover:bg-red-100 transition-all border border-red-100">Clear All Data</button>
+                </div>
+            </div>
 
-        const init = async () => {
-            try {
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                await signInAnonymously(auth);
-                onAuthStateChanged(auth, (u) => {
-                    if (u) {
-                        user = u;
-                        document.getElementById('loading').classList.add('hidden');
-                        document.getElementById('login-section').classList.remove('hidden');
-                        startSyncing();
-                    }
-                });
-            } catch (err) {
-                document.getElementById('config-error').classList.remove('hidden');
-            }
-            lucide.createIcons();
-        };
-
-        window.performLogin = async () => {
-            const uInput = document.getElementById('user-input').value.trim();
-            const pInput = document.getElementById('pass-input').value.trim();
-            if (uInput === 'admin' && pInput === 'admin123') {
-                document.getElementById('login-section').classList.add('hidden');
-                document.getElementById('main-section').classList.remove('hidden');
-                renderFamilyList();
-            } else {
-                alert("Invalid Login");
-            }
-        };
-
-        window.handleLogout = () => {
-            document.getElementById('login-section').classList.remove('hidden');
-            document.getElementById('main-section').classList.add('hidden');
-        };
-
-        const startSyncing = () => {
-            syncUnsubscribers.forEach(unsub => unsub());
-            const pRef = collection(db, 'artifacts', appId, 'public', 'data', 'phoneList');
-            const fRef = collection(db, 'artifacts', appId, 'public', 'data', 'feeReport');
-            const lRef = collection(db, 'artifacts', appId, 'public', 'data', 'callLogs');
-
-            syncUnsubscribers.push(onSnapshot(pRef, snap => {
-                phoneData = snap.docs.map(d => d.data());
-                document.getElementById('count-phone').innerText = phoneData.length;
-                renderFamilyList();
-            }));
-
-            syncUnsubscribers.push(onSnapshot(fRef, snap => {
-                feeData = snap.docs.map(d => d.data());
-                document.getElementById('count-fee').innerText = feeData.length;
-                renderFamilyList();
-            }));
-
-            syncUnsubscribers.push(onSnapshot(lRef, snap => {
-                callLogs = snap.docs.map(d => d.data());
-                if (activeFamily) updateRemarksInDrawer();
-            }));
-        };
-
-        window.processFile = async (e, type) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async (evt) => {
-                const data = evt.target.result;
-                const workbook = XLSX.read(data, { type: 'binary' });
-                const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                const batch = writeBatch(db);
-                json.forEach(item => {
-                    // Universal field mapping for family code
-                    const fCode = String(item['FAMILY CODE'] || item['FMLY #'] || item['FMLY#'] || item['familyCode'] || '');
-                    if (!fCode) return;
-                    const collectionName = type === 'phone' ? 'phoneList' : 'feeReport';
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', collectionName, fCode);
-                    batch.set(docRef, { ...item, familyCode: fCode, _type: type });
-                });
-                await batch.commit();
-                alert(`${type.toUpperCase()} imported.`);
-            };
-            reader.readAsBinaryString(file);
-        };
-
-        window.renderFamilyList = () => {
-            const q = document.getElementById('search-input').value.toLowerCase();
-            const list = document.getElementById('list-container');
-            if (!list) return;
-            list.innerHTML = '';
-
-            // LOGIC: Show only if exists in BOTH Phone List and Fee Report
-            const phoneCodes = new Set(phoneData.map(p => p.familyCode));
-            const commonCodes = feeData
-                .map(f => f.familyCode)
-                .filter(code => phoneCodes.has(code));
-
-            const filtered = commonCodes.filter(code => {
-                const phone = phoneData.find(p => p.familyCode === code) || {};
-                const fee = feeData.find(f => f.familyCode === code) || {};
-                const name = (fee['STUDENT NAME'] || phone['STUDENT NAME'] || '').toLowerCase();
-                return code.includes(q) || name.includes(q);
-            });
-
-            if (filtered.length === 0) {
-                list.innerHTML = `<p class="text-center text-slate-400 py-10 font-bold">No common records found.</p>`;
-                return;
-            }
-
-            filtered.forEach(code => {
-                const phone = phoneData.find(p => p.familyCode === code);
-                const fee = feeData.find(f => f.familyCode === code);
-                const name = fee['STUDENT NAME'] || phone['STUDENT NAME'] || 'N/A';
-                
-                const div = document.createElement('div');
-                div.className = "bg-white p-5 rounded-3xl shadow-sm border border-slate-50 flex justify-between items-center cursor-pointer hover:border-blue-300 transition-all";
-                div.onclick = () => showDrawer(code);
-                div.innerHTML = `
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-black text-xs">${code}</div>
-                        <div>
-                            <p class="font-extrabold text-slate-800 text-sm">${name}</p>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">${fee['CLASS & SECTION'] || 'N/A'}</p>
+            <!-- Search Area -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex flex-col md:flex-row gap-3">
+                    <div class="relative flex-1">
+                        <input type="text" id="search-input" placeholder="ID No / SR No / Family Code likhein..." class="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-100 outline-none text-base transition-all">
+                        <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                         </div>
+                    </div>
+                    <button onclick="performSearch()" class="bg-emerald-700 text-white px-10 py-4 rounded-2xl hover:bg-emerald-800 transition-all font-bold text-lg shadow-lg active:scale-95">Search Family</button>
+                </div>
+            </div>
+
+            <!-- Results container -->
+            <div id="records-container" class="space-y-6 min-h-[200px]"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyBwkBy_EzDFx6Xd_U7pE6Ud-jC9uL3tKiE",
+        authDomain: "theeducator-37df7.firebaseapp.com",
+        projectId: "theeducator-37df7",
+        storageBucket: "theeducator-37df7.firebasestorage.app",
+        messagingSenderId: "650246048269",
+        appId: "1:650246048269:web:1f94bf4faaf142849aa344",
+        measurementId: "G-37R36LHRRD"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const appId = "theeducator-37df7";
+
+    const getCol = (name) => db.collection('artifacts').doc(appId).collection('public').doc('data').collection(name);
+
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('user-display').innerText = `Admin: ${user.email.split('@')[0].toUpperCase()}`;
+            updateCounts();
+            loadInitialData();
+        } else {
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+        }
+    });
+
+    async function handleLogin() {
+        let u = document.getElementById('username').value.trim();
+        const p = document.getElementById('password').value;
+        const err = document.getElementById('login-error');
+        if (!u || !p) return;
+        const email = u.includes('@') ? u : `${u}@school.com`;
+        try { await auth.signInWithEmailAndPassword(email, p); } 
+        catch(e) { err.innerText = "Login fail!"; err.classList.remove('hidden'); }
+    }
+
+    function handleLogout() { auth.signOut(); }
+
+    async function updateCounts() {
+        try {
+            const [c, f, l] = await Promise.all([
+                getCol('contacts').get(),
+                getCol('fees').get(),
+                getCol('logs').get()
+            ]);
+            document.getElementById('count-contacts').innerText = c.size;
+            document.getElementById('count-fees').innerText = f.size;
+            document.getElementById('count-logs').innerText = l.size;
+        } catch(e) { console.warn("Count update failed", e); }
+    }
+
+    async function loadInitialData() {
+        const container = document.getElementById('records-container');
+        container.innerHTML = `<div class="text-center py-10 text-gray-400 font-bold tracking-widest uppercase">LATEST RECORDS</div>`;
+        try {
+            const [cSnap, fSnap] = await Promise.all([
+                getCol('contacts').limit(5).get(),
+                getCol('fees').limit(5).get()
+            ]);
+            renderResults(cSnap, fSnap);
+        } catch(e) { 
+            console.error("Initial load error:", e);
+            container.innerHTML = `<div class="text-center py-10 text-red-500 font-bold">Data load karne mein masla aa raha hai. Check permissions.</div>`; 
+        }
+    }
+
+    async function performSearch() {
+        const term = document.getElementById('search-input').value.trim();
+        const container = document.getElementById('records-container');
+        if (!term) { loadInitialData(); return; }
+
+        container.innerHTML = `<div class="text-center py-20 text-gray-400 animate-pulse font-bold uppercase tracking-widest">Searching Records...</div>`;
+        
+        try {
+            let familyCode = "";
+            const cCheck = await getCol('contacts').doc(term).get();
+            if (cCheck.exists) {
+                familyCode = cCheck.data().search_family;
+            } else {
+                const fCheck = await getCol('fees').doc(term).get();
+                if (fCheck.exists) {
+                    familyCode = fCheck.data().search_family;
+                }
+            }
+            if (!familyCode) familyCode = term;
+
+            // Simple simple queries (Rule 2 avoidance of complex queries)
+            const cSnap = await getCol('contacts').where('search_family', '==', familyCode.toString()).get();
+            const fSnap = await getCol('fees').where('search_family', '==', familyCode.toString()).get();
+            renderResults(cSnap, fSnap);
+        } catch(e) { 
+            console.error(e);
+            container.innerHTML = `<div class="text-center py-20 text-red-500 font-bold">Record nahi mila ya search mein error hai.</div>`; 
+        }
+    }
+
+    function renderResults(cSnap, fSnap) {
+        const container = document.getElementById('records-container');
+        const map = new Map();
+        
+        cSnap.forEach(d => map.set(d.id, { ...d.data(), id: d.id }));
+        fSnap.forEach(d => {
+            const existing = map.get(d.id) || {};
+            map.set(d.id, { ...existing, ...d.data(), id: d.id });
+        });
+
+        if (map.size === 0) { 
+            container.innerHTML = `<div class="text-center py-20 text-gray-400 font-bold uppercase">No matching data found.</div>`; 
+            return; 
+        }
+
+        let html = "";
+        map.forEach((d, sid) => {
+            // Robust check for names and mobile numbers
+            const name = d['STUDENT NAME'] || d['Student Name'] || d['Student Name / Father Name'] || 'N/A';
+            const fname = d['FATHER NAME'] || d['Father Name'] || 'N/A';
+            
+            // Comprehensive variations check for Phone numbers
+            const mobRaw = d['Mobile No'] || d['Mobile No.'] || d['Mobile'] || d['CELL #'] || d['CELL'] || d['Phone'] || d['Contact'] || d['MOBILE'] || d['WHATSAPP'] || 'N/A';
+            const mob = mobRaw.toString();
+            
+            const finalBal = d['Final Balance'] || d['Dues'] || d['Balance'] || d['FINAL BALANCE'] || '0';
+
+            html += `
+            <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-2xl">
+                <div class="bg-slate-800 p-4 flex justify-between items-center text-white border-b-4 border-emerald-600">
+                    <div>
+                        <span class="text-[10px] font-black opacity-60 uppercase tracking-tighter">Student ID / SR No.</span>
+                        <h2 class="text-lg font-black text-blue-400">${sid}</h2>
                     </div>
                     <div class="text-right">
-                        <p class="text-xs font-black ${Number(fee['ACTUAL FEE']) > 0 ? 'text-red-500' : 'text-green-500'}">Rs. ${fee['ACTUAL FEE'] || 0}</p>
+                        <span class="text-[10px] font-black opacity-60 uppercase tracking-tighter">Family Code</span>
+                        <h2 class="text-lg font-black text-emerald-400">${d.search_family || 'N/A'}</h2>
                     </div>
-                `;
-                list.appendChild(div);
-            });
-            lucide.createIcons();
-        };
+                </div>
+                <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="space-y-1">
+                        <h3 class="text-emerald-900 font-black text-xs border-b-2 border-emerald-500 pb-2 mb-4 uppercase tracking-widest">Basic Information</h3>
+                        <div class="detail-row"><span class="detail-label">Student Name</span><span class="detail-value">${name}</span></div>
+                        <div class="detail-row"><span class="detail-label">Father Name</span><span class="detail-value">${fname}</span></div>
+                        <div class="detail-row"><span class="detail-label">Class & Sec</span><span class="detail-value">${d.CLASS || d.Class || 'N/A'}</span></div>
+                        <div class="detail-row"><span class="detail-label">Mobile No</span><span class="detail-value text-blue-700 font-black">${mob}</span></div>
+                        <div class="detail-row"><span class="detail-label">WhatsApp No</span><span class="detail-value text-blue-700 font-black">${mob}</span></div>
+                    </div>
+                    
+                    <div class="space-y-1">
+                        <h3 class="text-emerald-900 font-black text-xs border-b-2 border-blue-500 pb-2 mb-4 uppercase tracking-widest">Fee Tracking</h3>
+                        <div class="detail-row"><span class="detail-label">Actual Fee</span><span class="detail-value">Rs. ${d['Actual Fee'] || d['Fee'] || '0'}</span></div>
+                        <div class="detail-row"><span class="detail-label">Transport</span><span class="detail-value">Rs. ${d.Transport || d['VAN FEE'] || '0'}</span></div>
+                        <div class="detail-row"><span class="detail-label">Fee Arrear</span><span class="detail-value text-red-600">Rs. ${d['Fee Arrear'] || d['Arrears'] || '0'}</span></div>
+                        <div class="detail-row"><span class="detail-label">Annual Charges</span><span class="detail-value">Rs. ${d['Annual Charges'] || '0'}</span></div>
+                        <div class="bg-emerald-50 p-4 rounded-2xl mt-4 flex justify-between items-center border border-emerald-100 shadow-inner">
+                            <span class="text-[10px] font-black text-emerald-800 uppercase tracking-widest">FINAL BALANCE</span>
+                            <span class="text-xl font-black text-blue-800">Rs. ${finalBal}</span>
+                        </div>
+                    </div>
 
-        window.showDrawer = (code) => {
-            const phone = phoneData.find(p => p.familyCode === code) || {};
-            const fee = feeData.find(f => f.familyCode === code) || {};
-            activeFamily = { code, phone, fee };
+                    <div class="flex flex-col">
+                        <h3 class="text-slate-800 font-black text-xs border-b-2 border-slate-300 pb-2 mb-4 uppercase tracking-widest text-center">Admin Controls</h3>
+                        <div class="flex gap-2 mb-4">
+                            <button onclick="window.location.href='tel:${mob}'" class="flex-1 bg-emerald-700 text-white py-3 rounded-2xl font-black text-[10px] shadow-lg hover:bg-emerald-800 transition-all flex items-center justify-center gap-2 uppercase tracking-wider">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                                Call
+                            </button>
+                            <a href="https://wa.me/${mob.replace(/[^0-9]/g, '')}" target="_blank" class="flex-1 bg-blue-600 text-white py-3 rounded-2xl font-black text-[10px] text-center flex items-center justify-center gap-2 shadow-lg hover:bg-blue-700 transition-all uppercase tracking-wider">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                WhatsApp
+                            </a>
+                        </div>
+                        <textarea id="rem-${sid}" class="flex-1 min-h-[100px] w-full bg-slate-50 border-2 border-slate-100 p-4 text-sm rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-50 outline-none transition-all mb-3 text-slate-700 font-medium" placeholder="Call summary yahan likhein...">${d.last_remark || ''}</textarea>
+                        <button onclick="saveLog('${sid}')" id="btn-${sid}" class="w-full bg-slate-900 text-white py-4 rounded-2xl text-[10px] font-black transition-all active:scale-95 shadow-xl uppercase tracking-[0.2em]">Save Summary</button>
+                    </div>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    async function saveLog(sid) {
+        const text = document.getElementById(`rem-${sid}`).value;
+        const btn = document.getElementById(`btn-${sid}`);
+        const now = new Date();
+        const dateStr = now.toLocaleDateString();
+        const timeStr = now.toLocaleTimeString();
+        try {
+            btn.innerText = "Saving...";
+            const payload = { last_remark: text, last_call_time: `${dateStr} ${timeStr}` };
+            await Promise.all([
+                getCol('contacts').doc(sid).set(payload, { merge: true }),
+                getCol('fees').doc(sid).set(payload, { merge: true }),
+                getCol('logs').add({ student_id: sid, remark: text, date: dateStr, time: timeStr, timestamp: now.getTime() })
+            ]);
+            btn.innerText = "Saved!";
+            setTimeout(() => { btn.innerText = "Save Summary"; }, 2000);
+            updateCounts();
+        } catch(e) { console.error(e); btn.innerText = "Error!"; }
+    }
+
+    async function downloadReport(type) {
+        try {
+            const [logsSnap, contactsSnap, feesSnap] = await Promise.all([
+                getCol('logs').get(),
+                getCol('contacts').get(),
+                getCol('fees').get()
+            ]);
             
-            document.getElementById('drawer-body').innerHTML = `
-                <div class="space-y-6">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="px-2 py-0.5 bg-blue-600 text-white text-[9px] font-black rounded-md">CODE: ${code}</span>
-                            <h3 class="text-2xl font-black text-slate-800 mt-2">${fee['STUDENT NAME'] || 'N/A'}</h3>
-                        </div>
-                        <div class="text-right bg-slate-50 p-3 rounded-2xl">
-                            <p class="text-[9px] font-bold text-slate-400 uppercase">Balance</p>
-                            <p class="text-xl font-black text-red-600">Rs. ${fee['ACTUAL FEE'] || 0}</p>
-                        </div>
-                    </div>
-                    <a href="tel:${phone['MOBILE']}" class="w-full bg-blue-600 text-white h-14 rounded-2xl flex items-center justify-center gap-3 font-bold">
-                        <i data-lucide="phone-call" class="size-5"></i> Call Parent
-                    </a>
-                    <div id="drawer-logs" class="space-y-2"></div>
-                </div>
-            `;
-            updateRemarksInDrawer();
-            document.getElementById('drawer').classList.remove('hidden');
-            lucide.createIcons();
-        };
-
-        window.updateRemarksInDrawer = () => {
-            const logsDiv = document.getElementById('drawer-logs');
-            if (!logsDiv || !activeFamily) return;
-            const filtered = callLogs.filter(l => l.familyCode === activeFamily.code).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-            logsDiv.innerHTML = filtered.map(l => `
-                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs font-bold">
-                    ${l.remarks}
-                    <p class="text-[9px] text-slate-400 mt-1">${new Date(l.timestamp).toLocaleString()}</p>
-                </div>
-            `).join('') || '<p class="text-center text-slate-400 py-4 italic text-xs">No logs yet.</p>';
-        };
-
-        window.saveRemark = async () => {
-            const r = document.getElementById('remark-box').value.trim();
-            if (!r || !activeFamily) return;
-            const logRef = doc(db, 'artifacts', appId, 'public', 'data', 'callLogs', Date.now().toString());
-            await setDoc(logRef, { familyCode: activeFamily.code, remarks: r, timestamp: new Date().toISOString() });
-            document.getElementById('remark-box').value = '';
-        };
-
-        window.closeDrawer = () => { document.getElementById('drawer').classList.add('hidden'); activeFamily = null; };
-
-        window.setActiveTab = (tab) => {
-            ['home', 'import', 'report'].forEach(t => {
-                document.getElementById(`content-${t}`).classList.add('hidden');
-                document.getElementById(`tab-${t}`).className = "flex-1 py-4 font-bold text-sm text-slate-400";
+            const studentMap = new Map();
+            contactsSnap.forEach(d => studentMap.set(d.id, { ...d.data() }));
+            feesSnap.forEach(d => {
+                const existing = studentMap.get(d.id) || {};
+                studentMap.set(d.id, { ...existing, ...d.data() });
             });
-            document.getElementById(`content-${tab}`).classList.remove('hidden');
-            document.getElementById(`tab-${tab}`).className = "flex-1 py-4 font-bold text-sm tab-active";
-            lucide.createIcons();
-        };
-
-        // REPORT GENERATION LOGIC
-        window.exportData = (format) => {
-            if (callLogs.length === 0) { alert("No logs to export."); return; }
-
-            const reportRows = callLogs.map(log => {
-                const fee = feeData.find(f => f.familyCode === log.familyCode) || {};
-                const phone = phoneData.find(p => p.familyCode === log.familyCode) || {};
+            
+            const logs = logsSnap.docs.map(doc => doc.data()).sort((a,b) => b.timestamp - a.timestamp);
+            const reportData = logs.map(log => {
+                const s = studentMap.get(log.student_id) || {};
                 return {
-                    'Family Code': log.familyCode,
-                    'Student Name': fee['STUDENT NAME'] || phone['STUDENT NAME'] || 'N/A',
-                    'Class': fee['CLASS & SECTION'] || 'N/A',
-                    'Mobile': phone['MOBILE'] || 'N/A',
-                    'Fee Balance': fee['ACTUAL FEE'] || 0,
-                    'Interaction Log': log.remarks,
-                    'Date & Time': new Date(log.timestamp).toLocaleString()
+                    "ID": log.student_id,
+                    "Name": s['STUDENT NAME'] || s['Student Name'] || 'N/A',
+                    "Father": s['FATHER NAME'] || s['Father Name'] || 'N/A',
+                    "Mobile": s['Mobile No'] || s['Mobile'] || 'N/A',
+                    "Balance": s['Final Balance'] || '0',
+                    "Date": log.date,
+                    "Remark": log.remark
                 };
             });
-
-            if (format === 'excel') {
-                const ws = XLSX.utils.json_to_sheet(reportRows);
+            
+            if (reportData.length === 0) { alert("Koi logs nahi hain."); return; }
+            
+            if (type === 'excel') {
+                const ws = XLSX.utils.json_to_sheet(reportData);
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Interaction Logs");
-                XLSX.writeFile(wb, `Educator_Portal_Report_${Date.now()}.xlsx`);
-            } else if (format === 'pdf') {
+                XLSX.utils.book_append_sheet(wb, ws, "Report");
+                XLSX.writeFile(wb, `Report.xlsx`);
+            } else {
                 const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('l', 'pt');
-                doc.text("Educators Portal - Interaction Logs", 40, 30);
-                
-                const headers = [['Code', 'Student Name', 'Class', 'Mobile', 'Fee', 'Remarks', 'Timestamp']];
-                const data = reportRows.map(r => [
-                    r['Family Code'], r['Student Name'], r['Class'], r['Mobile'], r['Fee Balance'], r['Interaction Log'], r['Date & Time']
-                ]);
-
-                doc.autoTable({
-                    head: headers,
-                    body: data,
-                    startY: 50,
-                    theme: 'grid',
-                    headStyles: { fillStyle: '#2563eb' }
+                const doc = new jsPDF('p', 'pt', 'a4'); 
+                doc.autoTable({ 
+                    head: [Object.keys(reportData[0])], 
+                    body: reportData.map(r => Object.values(r))
                 });
-                doc.save(`Educator_Report_${Date.now()}.pdf`);
+                doc.save(`Report.pdf`);
             }
-        };
+        } catch(e) { console.error(e); alert("Report generate karne mein error hai."); }
+    }
 
-        window.confirmDeleteAll = async () => {
-            if (confirm("Permanently delete ALL data?")) {
-                const batch = writeBatch(db);
-                const colls = ['phoneList', 'feeReport', 'callLogs'];
-                for (let c of colls) {
-                    const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', c));
-                    snap.forEach(d => batch.delete(d.ref));
+    async function handleImport(e, colName) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            try {
+                const wb = XLSX.read(evt.target.result, { type: 'binary' });
+                const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                const col = getCol(colName);
+                
+                // Show a loading indicator if possible
+                for(let i=0; i<data.length; i+=300) {
+                    const batch = db.batch();
+                    data.slice(i, i+300).forEach(item => {
+                        const id = (item['ID No.'] || item['SR. NO.'] || item['ID NO'] || item['Roll No'] || item['Student ID'] || '').toString().trim();
+                        const fam = (item['Fmly Code'] || item['FMLY #'] || item['Family Code'] || '').toString().trim();
+                        if(id) batch.set(col.doc(id), { ...item, search_id: id, search_family: fam }, { merge: true });
+                    });
+                    await batch.commit();
                 }
-                await batch.commit();
-                alert("Data Deleted.");
-            }
+                alert("Upload Mukammal!"); updateCounts(); loadInitialData();
+            } catch(e) { console.error(e); alert("Import Error! Check file format."); }
         };
+        reader.readAsBinaryString(file);
+    }
 
-        init();
-    </script>
+    document.getElementById('file-contacts').addEventListener('change', (e) => handleImport(e, 'contacts'));
+    document.getElementById('file-fees').addEventListener('change', (e) => handleImport(e, 'fees'));
+
+    async function confirmDeleteAll(event) {
+        if (!confirm("Kya aap waqai sara data delete karna chahte hain?")) return;
+        const check = prompt("Tasdeeq ke liye 'DELETE' likhein:");
+        if (check !== 'DELETE') return;
+        try {
+            const collections = ['contacts', 'fees', 'logs'];
+            for (const name of collections) {
+                const snapshot = await getCol(name).get();
+                const batch = db.batch();
+                snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+            }
+            alert("Safaaya ho gaya!"); location.reload();
+        } catch (e) { console.error(e); alert("Delete karne mein error."); }
+    }
+</script>
 </body>
 </html>
