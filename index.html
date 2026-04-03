@@ -8,130 +8,107 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #f3f4f6; }
-        .detail-row { @apply flex justify-between items-center py-3 border-b border-gray-100 last:border-0; gap: 2rem; }
-        .detail-label { @apply text-emerald-800 text-[11px] font-black uppercase tracking-widest text-left shrink-0; min-width: 140px; } 
-        .detail-value { @apply text-blue-600 text-sm font-bold text-right break-words flex-1; padding-left: 2rem; }
+        .detail-row { @apply flex justify-between items-center py-2 border-b border-gray-50 last:border-0; }
+        .detail-label { @apply text-emerald-800 text-[10px] font-black uppercase tracking-wider text-left shrink-0; min-width: 120px; } 
+        .detail-value { @apply text-blue-600 text-sm font-bold text-right break-words flex-1; }
         .stat-card { @apply bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center; }
+        .history-item { @apply bg-slate-50 p-3 rounded-xl border-l-4 border-emerald-500 mb-2; }
     </style>
 </head>
 <body>
 
-<div id="app" class="min-h-screen">
+<div id="app" class="min-h-screen pb-20">
     <!-- Login Screen -->
     <div id="login-screen" class="flex items-center justify-center min-h-screen bg-slate-900">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-96">
             <div class="text-center mb-8">
                 <h2 class="text-3xl font-extrabold text-slate-800">Admin Login</h2>
-                <p class="text-slate-500 mt-2">Apna Email aur Password darj karein</p>
+                <p class="text-slate-500 mt-2 italic">The Educator School System</p>
             </div>
             <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Email / Username</label>
-                    <input type="text" id="username" placeholder="admin@school.com" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input type="password" id="password" placeholder="••••••••" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
+                <input type="text" id="username" placeholder="Email / Username" class="w-full p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="password" id="password" placeholder="Password" class="w-full p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
                 <button onclick="handleLogin()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition-all shadow-lg">Login</button>
                 <p id="login-error" class="text-red-500 mt-2 text-sm text-center hidden"></p>
             </div>
         </div>
     </div>
 
-    <!-- Main Dashboard -->
+    <!-- Dashboard -->
     <div id="dashboard" class="hidden">
-        <nav class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center sticky top-0 z-40">
+        <nav class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center sticky top-0 z-40 shadow-sm">
             <div class="flex items-center gap-2">
-                <div class="bg-emerald-700 p-2 rounded-lg text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path d="M12 14l9-5-9-5-9 5 9 5z" />
-                        <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                    </svg>
-                </div>
-                <h1 class="text-xl font-bold text-gray-800 uppercase tracking-tight">The Educator Admin</h1>
+                <div class="bg-emerald-700 p-2 rounded-lg text-white font-black text-xl italic">E</div>
+                <h1 class="text-lg font-black text-slate-800 uppercase tracking-tighter">Educator Portal</h1>
             </div>
-            <div class="flex items-center gap-4">
-                <span id="user-display" class="text-sm text-gray-500 font-bold"></span>
-                <button onclick="handleLogout()" class="text-gray-400 hover:text-red-600 font-medium transition-colors">Logout</button>
-            </div>
+            <button onclick="handleLogout()" class="text-xs font-bold text-red-500 border border-red-100 px-3 py-1 rounded-full hover:bg-red-50">LOGOUT</button>
         </nav>
 
         <div class="container mx-auto p-4 lg:p-8 space-y-6">
             <!-- Stats -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="stat-card">
-                    <span class="text-xs font-bold uppercase text-gray-400">Contacts</span>
+                    <span class="text-[10px] font-black uppercase text-gray-400">Total Contacts</span>
                     <span id="count-contacts" class="text-2xl font-black text-blue-600">0</span>
                 </div>
                 <div class="stat-card">
-                    <span class="text-xs font-bold uppercase text-gray-400">Fee Records</span>
+                    <span class="text-[10px] font-black uppercase text-gray-400">Total Dues</span>
                     <span id="count-fees" class="text-2xl font-black text-emerald-600">0</span>
                 </div>
                 <div class="stat-card">
-                    <span class="text-xs font-bold uppercase text-gray-400">Call Logs</span>
+                    <span class="text-[10px] font-black uppercase text-gray-400">Total Call Logs</span>
                     <span id="count-logs" class="text-2xl font-black text-purple-600">0</span>
                 </div>
-                <div class="stat-card bg-emerald-700 text-white shadow-lg">
-                    <span class="text-xs font-bold uppercase opacity-80">Full Report</span>
-                    <div class="flex gap-2 mt-1">
-                        <button onclick="downloadReport('excel')" class="text-[10px] font-bold underline">Excel</button>
-                        <span>|</span>
-                        <button onclick="downloadReport('pdf')" class="text-[10px] font-bold underline">PDF</button>
+                <div class="stat-card bg-slate-800 text-white shadow-lg">
+                    <span class="text-[10px] font-black uppercase opacity-70">Download History</span>
+                    <div class="flex gap-4 mt-2">
+                        <button onclick="downloadReport('excel')" class="text-xs font-bold hover:text-emerald-400 transition-colors underline uppercase">Excel</button>
+                        <button onclick="downloadReport('pdf')" class="text-xs font-bold hover:text-blue-400 transition-colors underline uppercase">PDF</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Import Section -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                <div class="space-y-1">
-                    <h3 class="font-bold text-emerald-900 text-sm italic">1. Contact List (Excel)</h3>
-                    <input type="file" id="file-contacts" accept=".xlsx, .xls" class="block w-full text-[10px] text-gray-500 file:mr-2 file:py-2 file:px-3 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700">
+            <!-- Import Controls -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase">1. Contacts Excel</p>
+                    <input type="file" id="file-contacts" accept=".xlsx, .xls" class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700">
                 </div>
-                <div class="space-y-1">
-                    <h3 class="font-bold text-emerald-900 text-sm italic">2. Fee Report (Excel)</h3>
-                    <input type="file" id="file-fees" accept=".xlsx, .xls" class="block w-full text-[10px] text-gray-500 file:mr-2 file:py-2 file:px-3 file:rounded-full file:border-0 file:bg-emerald-50 file:text-emerald-700">
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase">2. Fees Excel</p>
+                    <input type="file" id="file-fees" accept=".xlsx, .xls" class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-emerald-700">
                 </div>
                 <div class="flex items-end">
-                    <button onclick="confirmDeleteAll(event)" class="w-full bg-red-50 text-red-600 py-2.5 rounded-xl text-xs font-bold hover:bg-red-100 transition-all border border-red-100">Clear All Data</button>
+                    <button onclick="confirmDeleteAll()" class="w-full bg-red-50 text-red-600 py-2.5 rounded-2xl text-[10px] font-black hover:bg-red-600 hover:text-white transition-all border border-red-100 uppercase tracking-widest">Clear Database</button>
                 </div>
             </div>
 
-            <!-- Search Area -->
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                <div class="flex flex-col md:flex-row gap-3">
-                    <div class="relative flex-1">
-                        <input type="text" id="search-input" placeholder="ID No / SR No / Family Code likhein..." class="w-full pl-12 pr-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-100 outline-none text-base transition-all">
-                        <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                        </div>
-                    </div>
-                    <button onclick="performSearch()" class="bg-emerald-700 text-white px-10 py-4 rounded-2xl hover:bg-emerald-800 transition-all font-bold text-lg shadow-lg active:scale-95">Search Family</button>
+            <!-- Search -->
+            <div class="bg-white p-3 rounded-3xl shadow-md border border-gray-100">
+                <div class="flex flex-col md:flex-row gap-2">
+                    <input type="text" id="search-input" placeholder="Enter ID / SR / Family Code..." class="flex-1 p-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-emerald-100 outline-none font-bold text-slate-700">
+                    <button onclick="performSearch()" class="bg-emerald-700 text-white px-8 py-4 rounded-2xl hover:bg-emerald-800 transition-all font-black uppercase tracking-widest text-sm shadow-xl">Search Now</button>
                 </div>
             </div>
 
-            <!-- Results container -->
-            <div id="records-container" class="space-y-6 min-h-[200px]"></div>
+            <div id="records-container" class="grid grid-cols-1 gap-6"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // Firebase Configuration
     const firebaseConfig = {
         apiKey: "AIzaSyBwkBy_EzDFx6Xd_U7pE6Ud-jC9uL3tKiE",
         authDomain: "theeducator-37df7.firebaseapp.com",
         projectId: "theeducator-37df7",
         storageBucket: "theeducator-37df7.firebasestorage.app",
         messagingSenderId: "650246048269",
-        appId: "1:650246048269:web:1f94bf4faaf142849aa344",
-        measurementId: "G-37R36LHRRD"
+        appId: "1:650246048269:web:1f94bf4faaf142849aa344"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -145,9 +122,8 @@
         if (user) {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
-            document.getElementById('user-display').innerText = `Admin: ${user.email.split('@')[0].toUpperCase()}`;
             updateCounts();
-            loadInitialData();
+            loadRecent();
         } else {
             document.getElementById('login-screen').classList.remove('hidden');
             document.getElementById('dashboard').classList.add('hidden');
@@ -155,223 +131,161 @@
     });
 
     async function handleLogin() {
-        let u = document.getElementById('username').value.trim();
+        const u = document.getElementById('username').value.trim();
         const p = document.getElementById('password').value;
-        const err = document.getElementById('login-error');
-        if (!u || !p) return;
         const email = u.includes('@') ? u : `${u}@school.com`;
-        try { await auth.signInWithEmailAndPassword(email, p); } 
-        catch(e) { err.innerText = "Login fail!"; err.classList.remove('hidden'); }
+        try { await auth.signInWithEmailAndPassword(email, p); } catch(e) { document.getElementById('login-error').classList.remove('hidden'); }
     }
 
     function handleLogout() { auth.signOut(); }
 
     async function updateCounts() {
         try {
-            const [c, f, l] = await Promise.all([
-                getCol('contacts').get(),
-                getCol('fees').get(),
-                getCol('logs').get()
-            ]);
+            const [c, f, l] = await Promise.all([getCol('contacts').get(), getCol('fees').get(), getCol('logs').get()]);
             document.getElementById('count-contacts').innerText = c.size;
             document.getElementById('count-fees').innerText = f.size;
             document.getElementById('count-logs').innerText = l.size;
-        } catch(e) { console.warn("Count update failed", e); }
+        } catch(e) {}
     }
 
-    async function loadInitialData() {
-        const container = document.getElementById('records-container');
-        container.innerHTML = `<div class="text-center py-10 text-gray-400 font-bold tracking-widest uppercase">LATEST RECORDS</div>`;
-        try {
-            const [cSnap, fSnap] = await Promise.all([
-                getCol('contacts').limit(5).get(),
-                getCol('fees').limit(5).get()
-            ]);
-            renderResults(cSnap, fSnap);
-        } catch(e) { 
-            console.error("Initial load error:", e);
-            container.innerHTML = `<div class="text-center py-10 text-red-500 font-bold">Data load karne mein masla aa raha hai. Check permissions.</div>`; 
-        }
+    async function loadRecent() {
+        const cSnap = await getCol('contacts').limit(5).get();
+        const fSnap = await getCol('fees').limit(5).get();
+        renderRecords(cSnap, fSnap);
     }
 
     async function performSearch() {
         const term = document.getElementById('search-input').value.trim();
+        if (!term) return;
         const container = document.getElementById('records-container');
-        if (!term) { loadInitialData(); return; }
-
-        container.innerHTML = `<div class="text-center py-20 text-gray-400 animate-pulse font-bold uppercase tracking-widest">Searching Records...</div>`;
+        container.innerHTML = `<div class="text-center py-20 animate-pulse font-black text-slate-400">SEARCHING...</div>`;
         
         try {
-            let familyCode = "";
-            const cCheck = await getCol('contacts').doc(term).get();
-            if (cCheck.exists) {
-                familyCode = cCheck.data().search_family;
-            } else {
-                const fCheck = await getCol('fees').doc(term).get();
-                if (fCheck.exists) {
-                    familyCode = fCheck.data().search_family;
-                }
+            let famCode = term;
+            const cTest = await getCol('contacts').doc(term).get();
+            if (cTest.exists) famCode = cTest.data().search_family;
+            else {
+                const fTest = await getCol('fees').doc(term).get();
+                if (fTest.exists) famCode = fTest.data().search_family;
             }
-            if (!familyCode) familyCode = term;
 
-            // Simple simple queries (Rule 2 avoidance of complex queries)
-            const cSnap = await getCol('contacts').where('search_family', '==', familyCode.toString()).get();
-            const fSnap = await getCol('fees').where('search_family', '==', familyCode.toString()).get();
-            renderResults(cSnap, fSnap);
-        } catch(e) { 
-            console.error(e);
-            container.innerHTML = `<div class="text-center py-20 text-red-500 font-bold">Record nahi mila ya search mein error hai.</div>`; 
-        }
+            const [cSnap, fSnap] = await Promise.all([
+                getCol('contacts').where('search_family', '==', famCode.toString()).get(),
+                getCol('fees').where('search_family', '==', famCode.toString()).get()
+            ]);
+            renderRecords(cSnap, fSnap);
+        } catch(e) { container.innerHTML = `<p class="text-red-500 text-center font-bold">Search error occurred.</p>`; }
     }
 
-    function renderResults(cSnap, fSnap) {
+    async function renderRecords(cSnap, fSnap) {
         const container = document.getElementById('records-container');
-        const map = new Map();
+        const dataMap = new Map();
         
-        cSnap.forEach(d => map.set(d.id, { ...d.data(), id: d.id }));
-        fSnap.forEach(d => {
-            const existing = map.get(d.id) || {};
-            map.set(d.id, { ...existing, ...d.data(), id: d.id });
+        cSnap.forEach(doc => dataMap.set(doc.id, { ...doc.data(), id: doc.id }));
+        fSnap.forEach(doc => {
+            const current = dataMap.get(doc.id) || {};
+            dataMap.set(doc.id, { ...current, ...doc.data(), id: doc.id });
         });
 
-        if (map.size === 0) { 
-            container.innerHTML = `<div class="text-center py-20 text-gray-400 font-bold uppercase">No matching data found.</div>`; 
-            return; 
-        }
+        if (dataMap.size === 0) { container.innerHTML = `<p class="text-center text-slate-400 py-20 font-bold uppercase italic tracking-widest">No Records Found</p>`; return; }
 
         let html = "";
-        map.forEach((d, sid) => {
-            // Robust check for names and mobile numbers
-            const name = d['STUDENT NAME'] || d['Student Name'] || d['Student Name / Father Name'] || 'N/A';
-            const fname = d['FATHER NAME'] || d['Father Name'] || 'N/A';
+        for (let [id, data] of dataMap) {
+            const logs = await getCol('logs').where('student_id', '==', id).get();
+            const logItems = logs.docs.map(l => l.data()).sort((a,b) => b.timestamp - a.timestamp);
             
-            // Comprehensive variations check for Phone numbers
-            const mobRaw = d['Mobile No'] || d['Mobile No.'] || d['Mobile'] || d['CELL #'] || d['CELL'] || d['Phone'] || d['Contact'] || d['MOBILE'] || d['WHATSAPP'] || 'N/A';
-            const mob = mobRaw.toString();
-            
-            const finalBal = d['Final Balance'] || d['Dues'] || d['Balance'] || d['FINAL BALANCE'] || '0';
+            const mobRaw = data['Mobile No'] || data['Mobile'] || data['CELL #'] || data['WHATSAPP'] || '0';
+            const name = data['STUDENT NAME'] || data['Student Name'] || 'N/A';
+            const balance = data['Final Balance'] || data['Dues'] || '0';
 
             html += `
-            <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden mb-6 transition-all hover:shadow-2xl">
-                <div class="bg-slate-800 p-4 flex justify-between items-center text-white border-b-4 border-emerald-600">
-                    <div>
-                        <span class="text-[10px] font-black opacity-60 uppercase tracking-tighter">Student ID / SR No.</span>
-                        <h2 class="text-lg font-black text-blue-400">${sid}</h2>
+            <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-gray-100 mb-6">
+                <div class="bg-slate-900 p-5 flex justify-between items-center text-white">
+                    <div class="flex gap-4">
+                        <div class="text-center bg-emerald-600 px-3 py-1 rounded-xl">
+                            <p class="text-[8px] font-black opacity-70">ID NO</p>
+                            <p class="text-sm font-black">${id}</p>
+                        </div>
+                        <div class="text-center bg-blue-600 px-3 py-1 rounded-xl">
+                            <p class="text-[8px] font-black opacity-70">FAMILY</p>
+                            <p class="text-sm font-black">${data.search_family || 'N/A'}</p>
+                        </div>
                     </div>
                     <div class="text-right">
-                        <span class="text-[10px] font-black opacity-60 uppercase tracking-tighter">Family Code</span>
-                        <h2 class="text-lg font-black text-emerald-400">${d.search_family || 'N/A'}</h2>
+                        <p class="text-xs font-black text-emerald-400 uppercase italic">Active Record</p>
                     </div>
                 </div>
-                <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="space-y-1">
-                        <h3 class="text-emerald-900 font-black text-xs border-b-2 border-emerald-500 pb-2 mb-4 uppercase tracking-widest">Basic Information</h3>
-                        <div class="detail-row"><span class="detail-label">Student Name</span><span class="detail-value">${name}</span></div>
-                        <div class="detail-row"><span class="detail-label">Father Name</span><span class="detail-value">${fname}</span></div>
-                        <div class="detail-row"><span class="detail-label">Class & Sec</span><span class="detail-value">${d.CLASS || d.Class || 'N/A'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Mobile No</span><span class="detail-value text-blue-700 font-black">${mob}</span></div>
-                        <div class="detail-row"><span class="detail-label">WhatsApp No</span><span class="detail-value text-blue-700 font-black">${mob}</span></div>
-                    </div>
-                    
-                    <div class="space-y-1">
-                        <h3 class="text-emerald-900 font-black text-xs border-b-2 border-blue-500 pb-2 mb-4 uppercase tracking-widest">Fee Tracking</h3>
-                        <div class="detail-row"><span class="detail-label">Actual Fee</span><span class="detail-value">Rs. ${d['Actual Fee'] || d['Fee'] || '0'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Transport</span><span class="detail-value">Rs. ${d.Transport || d['VAN FEE'] || '0'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Fee Arrear</span><span class="detail-value text-red-600">Rs. ${d['Fee Arrear'] || d['Arrears'] || '0'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Annual Charges</span><span class="detail-value">Rs. ${d['Annual Charges'] || '0'}</span></div>
-                        <div class="bg-emerald-50 p-4 rounded-2xl mt-4 flex justify-between items-center border border-emerald-100 shadow-inner">
-                            <span class="text-[10px] font-black text-emerald-800 uppercase tracking-widest">FINAL BALANCE</span>
-                            <span class="text-xl font-black text-blue-800">Rs. ${finalBal}</span>
+
+                <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Info -->
+                    <div class="space-y-4">
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 border-b pb-2">Student Info</h4>
+                        <div class="detail-row"><span class="detail-label">Name</span><span class="detail-value uppercase">${name}</span></div>
+                        <div class="detail-row"><span class="detail-label">Father</span><span class="detail-value uppercase">${data['FATHER NAME'] || 'N/A'}</span></div>
+                        <div class="detail-row"><span class="detail-label">Class</span><span class="detail-value uppercase">${data.CLASS || 'N/A'}</span></div>
+                        <div class="mt-4 flex gap-2">
+                            <a href="tel:${mobRaw}" class="flex-1 bg-emerald-600 text-white text-center py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-emerald-700 transition-all">Call Now</a>
+                            <a href="https://wa.me/${mobRaw.toString().replace(/\D/g,'')}" target="_blank" class="flex-1 bg-blue-600 text-white text-center py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-blue-700 transition-all">WhatsApp</a>
                         </div>
                     </div>
 
-                    <div class="flex flex-col">
-                        <h3 class="text-slate-800 font-black text-xs border-b-2 border-slate-300 pb-2 mb-4 uppercase tracking-widest text-center">Admin Controls</h3>
-                        <div class="flex gap-2 mb-4">
-                            <button onclick="window.location.href='tel:${mob}'" class="flex-1 bg-emerald-700 text-white py-3 rounded-2xl font-black text-[10px] shadow-lg hover:bg-emerald-800 transition-all flex items-center justify-center gap-2 uppercase tracking-wider">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                                Call
-                            </button>
-                            <a href="https://wa.me/${mob.replace(/[^0-9]/g, '')}" target="_blank" class="flex-1 bg-blue-600 text-white py-3 rounded-2xl font-black text-[10px] text-center flex items-center justify-center gap-2 shadow-lg hover:bg-blue-700 transition-all uppercase tracking-wider">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                                WhatsApp
-                            </a>
+                    <!-- Finance -->
+                    <div class="space-y-4">
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 border-b pb-2">Fee Status</h4>
+                        <div class="detail-row"><span class="detail-label">Arrears</span><span class="detail-value text-red-600">Rs. ${data['Fee Arrear'] || '0'}</span></div>
+                        <div class="detail-row"><span class="detail-label">Fee</span><span class="detail-value">Rs. ${data['Actual Fee'] || '0'}</span></div>
+                        <div class="detail-row"><span class="detail-label">Total Dues</span><span class="detail-value text-lg text-blue-800 font-black">Rs. ${balance}</span></div>
+                    </div>
+
+                    <!-- Logs & Interaction -->
+                    <div class="space-y-4">
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 border-b pb-2">Call Summary & History</h4>
+                        <textarea id="log-text-${id}" placeholder="Aaj ki call details yahan likhein..." class="w-full h-24 bg-slate-50 rounded-2xl p-4 text-xs font-bold border-2 border-transparent focus:border-emerald-500 outline-none transition-all"></textarea>
+                        <button onclick="saveCallLog('${id}')" id="btn-log-${id}" class="w-full bg-slate-900 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all">Save Remarks</button>
+                        
+                        <div class="mt-6">
+                            <p class="text-[10px] font-black text-slate-400 mb-2 uppercase italic">Call History (${logItems.length})</p>
+                            <div class="max-h-48 overflow-y-auto pr-2 space-y-2">
+                                ${logItems.length > 0 ? logItems.map(log => `
+                                    <div class="history-item">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="text-[8px] font-black text-emerald-700 uppercase">${log.date} @ ${log.time}</span>
+                                        </div>
+                                        <p class="text-[11px] font-bold text-slate-700 leading-tight italic">"${log.remark}"</p>
+                                    </div>
+                                `).join('') : '<p class="text-[10px] text-slate-400 font-bold italic">No history available.</p>'}
+                            </div>
                         </div>
-                        <textarea id="rem-${sid}" class="flex-1 min-h-[100px] w-full bg-slate-50 border-2 border-slate-100 p-4 text-sm rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-50 outline-none transition-all mb-3 text-slate-700 font-medium" placeholder="Call summary yahan likhein...">${d.last_remark || ''}</textarea>
-                        <button onclick="saveLog('${sid}')" id="btn-${sid}" class="w-full bg-slate-900 text-white py-4 rounded-2xl text-[10px] font-black transition-all active:scale-95 shadow-xl uppercase tracking-[0.2em]">Save Summary</button>
                     </div>
                 </div>
             </div>`;
-        });
+        }
         container.innerHTML = html;
     }
 
-    async function saveLog(sid) {
-        const text = document.getElementById(`rem-${sid}`).value;
-        const btn = document.getElementById(`btn-${sid}`);
-        const now = new Date();
-        const dateStr = now.toLocaleDateString();
-        const timeStr = now.toLocaleTimeString();
-        try {
-            btn.innerText = "Saving...";
-            const payload = { last_remark: text, last_call_time: `${dateStr} ${timeStr}` };
-            await Promise.all([
-                getCol('contacts').doc(sid).set(payload, { merge: true }),
-                getCol('fees').doc(sid).set(payload, { merge: true }),
-                getCol('logs').add({ student_id: sid, remark: text, date: dateStr, time: timeStr, timestamp: now.getTime() })
-            ]);
-            btn.innerText = "Saved!";
-            setTimeout(() => { btn.innerText = "Save Summary"; }, 2000);
-            updateCounts();
-        } catch(e) { console.error(e); btn.innerText = "Error!"; }
-    }
+    async function saveCallLog(sid) {
+        const text = document.getElementById(`log-text-${sid}`).value.trim();
+        const btn = document.getElementById(`btn-log-${sid}`);
+        if (!text) return;
 
-    async function downloadReport(type) {
+        const now = new Date();
+        const payload = {
+            student_id: sid,
+            remark: text,
+            date: now.toLocaleDateString(),
+            time: now.toLocaleTimeString(),
+            timestamp: now.getTime()
+        };
+
         try {
-            const [logsSnap, contactsSnap, feesSnap] = await Promise.all([
-                getCol('logs').get(),
-                getCol('contacts').get(),
-                getCol('fees').get()
-            ]);
-            
-            const studentMap = new Map();
-            contactsSnap.forEach(d => studentMap.set(d.id, { ...d.data() }));
-            feesSnap.forEach(d => {
-                const existing = studentMap.get(d.id) || {};
-                studentMap.set(d.id, { ...existing, ...d.data() });
-            });
-            
-            const logs = logsSnap.docs.map(doc => doc.data()).sort((a,b) => b.timestamp - a.timestamp);
-            const reportData = logs.map(log => {
-                const s = studentMap.get(log.student_id) || {};
-                return {
-                    "ID": log.student_id,
-                    "Name": s['STUDENT NAME'] || s['Student Name'] || 'N/A',
-                    "Father": s['FATHER NAME'] || s['Father Name'] || 'N/A',
-                    "Mobile": s['Mobile No'] || s['Mobile'] || 'N/A',
-                    "Balance": s['Final Balance'] || '0',
-                    "Date": log.date,
-                    "Remark": log.remark
-                };
-            });
-            
-            if (reportData.length === 0) { alert("Koi logs nahi hain."); return; }
-            
-            if (type === 'excel') {
-                const ws = XLSX.utils.json_to_sheet(reportData);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Report");
-                XLSX.writeFile(wb, `Report.xlsx`);
-            } else {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('p', 'pt', 'a4'); 
-                doc.autoTable({ 
-                    head: [Object.keys(reportData[0])], 
-                    body: reportData.map(r => Object.values(r))
-                });
-                doc.save(`Report.pdf`);
-            }
-        } catch(e) { console.error(e); alert("Report generate karne mein error hai."); }
+            btn.innerText = "SAVING...";
+            btn.disabled = true;
+            await getCol('logs').add(payload);
+            await getCol('contacts').doc(sid).set({ last_call: payload.date }, { merge: true });
+            btn.innerText = "SAVED!";
+            document.getElementById(`log-text-${sid}`).value = "";
+            setTimeout(() => { performSearch(); updateCounts(); }, 1000);
+        } catch(e) { alert("Save error!"); btn.innerText = "RETRY"; btn.disabled = false; }
     }
 
     async function handleImport(e, colName) {
@@ -379,23 +293,19 @@
         if (!file) return;
         const reader = new FileReader();
         reader.onload = async (evt) => {
-            try {
-                const wb = XLSX.read(evt.target.result, { type: 'binary' });
-                const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-                const col = getCol(colName);
-                
-                // Show a loading indicator if possible
-                for(let i=0; i<data.length; i+=300) {
-                    const batch = db.batch();
-                    data.slice(i, i+300).forEach(item => {
-                        const id = (item['ID No.'] || item['SR. NO.'] || item['ID NO'] || item['Roll No'] || item['Student ID'] || '').toString().trim();
-                        const fam = (item['Fmly Code'] || item['FMLY #'] || item['Family Code'] || '').toString().trim();
-                        if(id) batch.set(col.doc(id), { ...item, search_id: id, search_family: fam }, { merge: true });
-                    });
-                    await batch.commit();
-                }
-                alert("Upload Mukammal!"); updateCounts(); loadInitialData();
-            } catch(e) { console.error(e); alert("Import Error! Check file format."); }
+            const wb = XLSX.read(evt.target.result, { type: 'binary' });
+            const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+            const col = getCol(colName);
+            for(let i=0; i<data.length; i+=100) {
+                const batch = db.batch();
+                data.slice(i, i+100).forEach(item => {
+                    const id = (item['ID No.'] || item['SR. NO.'] || item['Student ID'] || item['ID NO'] || '').toString().trim();
+                    const fCode = (item['Fmly Code'] || item['FMLY #'] || item['Family Code'] || '').toString().trim();
+                    if(id) batch.set(col.doc(id), { ...item, search_family: fCode }, { merge: true });
+                });
+                await batch.commit();
+            }
+            alert("Upload Success!"); updateCounts();
         };
         reader.readAsBinaryString(file);
     }
@@ -403,20 +313,52 @@
     document.getElementById('file-contacts').addEventListener('change', (e) => handleImport(e, 'contacts'));
     document.getElementById('file-fees').addEventListener('change', (e) => handleImport(e, 'fees'));
 
-    async function confirmDeleteAll(event) {
-        if (!confirm("Kya aap waqai sara data delete karna chahte hain?")) return;
-        const check = prompt("Tasdeeq ke liye 'DELETE' likhein:");
-        if (check !== 'DELETE') return;
-        try {
-            const collections = ['contacts', 'fees', 'logs'];
-            for (const name of collections) {
-                const snapshot = await getCol(name).get();
-                const batch = db.batch();
-                snapshot.docs.forEach(doc => batch.delete(doc.ref));
-                await batch.commit();
-            }
-            alert("Safaaya ho gaya!"); location.reload();
-        } catch (e) { console.error(e); alert("Delete karne mein error."); }
+    async function downloadReport(type) {
+        const [lSnap, cSnap, fSnap] = await Promise.all([getCol('logs').get(), getCol('contacts').get(), getCol('fees').get()]);
+        const sMap = new Map();
+        cSnap.forEach(d => sMap.set(d.id, d.data()));
+        fSnap.forEach(d => sMap.set(d.id, { ...(sMap.get(d.id)||{}), ...d.data() }));
+
+        const rows = lSnap.docs.map(doc => {
+            const l = doc.data();
+            const s = sMap.get(l.student_id) || {};
+            return {
+                "Date": l.date,
+                "Time": l.time,
+                "Student ID": l.student_id,
+                "Name": s['STUDENT NAME'] || s['Student Name'] || 'N/A',
+                "Father": s['FATHER NAME'] || 'N/A',
+                "Mobile": s['Mobile No'] || s['Mobile'] || 'N/A',
+                "Remarks": l.remark,
+                "Balance": s['Final Balance'] || '0'
+            };
+        }).sort((a,b) => new Date(b.Date + ' ' + b.Time) - new Date(a.Date + ' ' + a.Time));
+
+        if (type === 'excel') {
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "CallReport");
+            XLSX.writeFile(wb, "Full_Call_History.xlsx");
+        } else {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'pt', 'a4');
+            doc.autoTable({ head: [Object.keys(rows[0])], body: rows.map(r => Object.values(r)) });
+            doc.save("Call_History_Report.pdf");
+        }
+    }
+
+    async function confirmDeleteAll() {
+        if (!confirm("Are you sure? This will delete ALL student and fee data!")) return;
+        const pass = prompt("Type 'CONFIRM' to delete:");
+        if (pass !== 'CONFIRM') return;
+        const collections = ['contacts', 'fees', 'logs'];
+        for(let name of collections) {
+            const snap = await getCol(name).get();
+            const batch = db.batch();
+            snap.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+        }
+        alert("Database Cleared!"); location.reload();
     }
 </script>
 </body>
