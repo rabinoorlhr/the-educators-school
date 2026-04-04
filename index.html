@@ -2,158 +2,121 @@
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Educators - Admin Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Educators - Management System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; overflow-x: hidden; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #1e293b; }
         
-        /* Mobile specific adjustments for detail rows */
-        .detail-row { 
-            display: flex; 
-            flex-direction: row; 
-            align-items: center; 
-            padding: 10px 14px; 
-            border-bottom: 1px solid #f1f5f9; 
+        /* Mobile Specific Fix for Name Display */
+        .info-card {
             background: white;
-            gap: 12px;
+            border-radius: 24px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
         }
-        
-        @media (max-width: 640px) {
-            .detail-row { flex-direction: column; align-items: flex-start; gap: 4px; }
-            .detail-label { width: 100% !important; font-size: 9px; }
-            .detail-value { width: 100% !important; font-size: 13px; padding: 4px 8px; }
-            .card-container { margin: 10px; border-radius: 1.5rem; }
-            .nav-container { padding: 10px; }
-            .stats-grid { gap: 12px; }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start; /* Taake lambay naam niche shift ho jayein */
+            padding: 14px 20px;
+            border-bottom: 1px solid #f1f5f9;
         }
-        
-        .detail-label { 
-            font-size: 10px; 
-            font-weight: 800; 
+
+        .info-row:last-child { border-bottom: none; }
+
+        .info-label {
+            font-size: 11px;
+            font-weight: 800;
             color: #064e3b;
-            text-transform: uppercase; 
-            letter-spacing: 0.05em;
-            width: 140px;
-            flex-shrink: 0;
-        }
-        
-        .detail-value { 
-            font-size: 14px; 
-            font-weight: 700; 
-            color: #1d4ed8;
             text-transform: uppercase;
-            background-color: #eff6ff; 
-            padding: 6px 12px; 
-            border-radius: 6px;
-            flex-grow: 1;
-            border: 1px solid #dbeafe;
+            width: 40%;
+            padding-top: 4px;
         }
-        
-        .table-header { @apply px-2 py-3 bg-slate-900 text-white text-[9px] font-black uppercase tracking-tighter text-left sticky top-0; }
-        .table-cell { @apply px-2 py-3 text-[10px] font-bold text-slate-600 border-b border-slate-100 uppercase whitespace-nowrap; }
-        
-        .card-container { @apply bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden; }
-        .history-card { @apply bg-slate-50 p-3 rounded-xl border-l-4 border-emerald-500 mb-2; }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #0369a1;
+            text-align: right;
+            width: 60%;
+            word-wrap: break-word; /* Lambay naam ke liye */
+            line-height: 1.2;
+            text-transform: uppercase;
+        }
+
+        .value-box {
+            background: #f0f9ff;
+            padding: 6px 12px;
+            border-radius: 8px;
+            display: inline-block;
+            max-width: 100%;
+        }
+
+        .search-container {
+            background: white;
+            padding: 6px;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            margin-bottom: 20px;
+        }
+
+        .btn-call { background-color: #0f172a; color: white; }
+        .btn-wa { background-color: #059669; color: white; }
+
+        @media (max-width: 400px) {
+            .info-label { font-size: 10px; width: 35%; }
+            .info-value { font-size: 13px; width: 65%; }
+        }
     </style>
 </head>
 <body>
 
-<div id="app" class="min-h-screen">
-    <!-- Login Screen -->
-    <div id="login-screen" class="flex items-center justify-center min-h-screen bg-slate-900 px-4">
-        <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md border-t-8 border-emerald-600">
+<div id="app" class="min-h-screen pb-10">
+    <!-- Login Section -->
+    <div id="login-screen" class="flex items-center justify-center min-h-screen p-6 bg-slate-900">
+        <div class="bg-white p-8 rounded-[2rem] w-full max-w-sm">
             <div class="text-center mb-8">
-                <div class="bg-emerald-700 w-16 h-16 rounded-2xl flex items-center justify-center text-white text-3xl font-black italic mx-auto mb-4 rotate-3">E</div>
-                <h2 class="text-3xl font-black text-slate-800 tracking-tighter">ADMIN</h2>
-                <p class="text-emerald-600 font-black italic text-[10px] uppercase tracking-widest">The Educators Portal</p>
+                <div class="bg-emerald-600 w-14 h-14 rounded-2xl flex items-center justify-center text-white text-2xl font-black italic mx-auto mb-2">E</div>
+                <h1 class="text-xl font-black tracking-tighter uppercase">Admin Login</h1>
             </div>
-            <div class="space-y-4">
-                <input type="text" id="username" placeholder="USERNAME" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-emerald-500 font-bold text-slate-700 uppercase">
-                <input type="password" id="password" placeholder="PASSWORD" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-emerald-500 font-bold text-slate-700">
-                <button onclick="handleLogin()" class="w-full bg-slate-900 text-white p-4 rounded-xl font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg">Login Access</button>
-                <p id="login-error" class="text-red-500 mt-4 text-[10px] text-center hidden font-black italic uppercase tracking-tighter">Access Denied: Invalid Credentials</p>
-            </div>
+            <input type="text" id="username" placeholder="USERNAME" class="w-full p-4 mb-3 bg-slate-50 border rounded-xl font-bold uppercase">
+            <input type="password" id="password" placeholder="PASSWORD" class="w-full p-4 mb-4 bg-slate-50 border rounded-xl font-bold">
+            <button onclick="handleLogin()" class="w-full bg-emerald-600 text-white p-4 rounded-xl font-black uppercase tracking-widest">Login</button>
         </div>
     </div>
 
-    <!-- Dashboard -->
+    <!-- Dashboard Section -->
     <div id="dashboard" class="hidden">
-        <nav class="bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center sticky top-0 z-50">
+        <!-- Header -->
+        <header class="bg-white px-4 py-3 flex justify-between items-center border-b sticky top-0 z-50">
             <div class="flex items-center gap-2">
-                <div class="bg-emerald-700 p-2 rounded-lg text-white font-black text-lg italic">E</div>
+                <div class="bg-emerald-600 p-2 rounded-lg text-white font-black italic">E</div>
                 <div>
-                    <h1 class="text-sm font-black text-slate-900 uppercase tracking-tighter leading-none">THE EDUCATORS</h1>
-                    <span class="text-[8px] font-black text-emerald-600 uppercase tracking-widest">Portal</span>
+                    <h2 class="text-sm font-black leading-none uppercase">The Educators</h2>
+                    <span class="text-[8px] font-bold text-emerald-600 uppercase tracking-widest">Management System</span>
                 </div>
             </div>
-            <button onclick="handleLogout()" class="text-[9px] font-black text-red-600 bg-red-50 px-4 py-2 rounded-full hover:bg-red-600 hover:text-white transition-all uppercase border border-red-100">Logout</button>
-        </nav>
+            <button onclick="handleLogout()" class="text-[10px] font-black text-red-500 bg-red-50 px-4 py-2 rounded-full uppercase">Logout</button>
+        </header>
 
-        <div class="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
-            <!-- Stats -->
-            <div class="grid grid-cols-2 md:grid-cols-4 stats-grid gap-4">
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center">
-                    <span class="text-[8px] font-black uppercase text-slate-400 tracking-widest mb-1 block">Students</span>
-                    <span id="count-contacts" class="text-2xl font-black text-emerald-700">0</span>
-                </div>
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center">
-                    <span class="text-[8px] font-black uppercase text-slate-400 tracking-widest mb-1 block">Today Calls</span>
-                    <span id="count-logs-today" class="text-2xl font-black text-blue-600">0</span>
-                </div>
-                <div class="col-span-2 bg-slate-900 text-white p-4 rounded-2xl shadow-xl flex gap-2">
-                    <button onclick="downloadReport('excel')" class="flex-1 bg-emerald-600 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-md">Excel</button>
-                    <button onclick="downloadReport('pdf')" class="flex-1 bg-blue-600 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-md">PDF</button>
-                </div>
+        <div class="p-4 max-w-md mx-auto">
+            <!-- Search -->
+            <div class="search-container flex gap-2">
+                <input type="number" id="search-input" placeholder="ENTER SR. NO / ID..." class="flex-1 p-3 pl-5 outline-none font-bold text-slate-800 uppercase text-sm">
+                <button onclick="performSearch()" class="bg-emerald-600 text-white px-6 py-3 rounded-[14px] font-black uppercase text-[10px]">Search</button>
             </div>
 
-            <!-- Import -->
-            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 items-center">
-                <input type="file" id="file-contacts" accept=".xlsx, .xls" class="block w-full text-[10px] text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[9px] file:font-black file:bg-slate-900 file:text-white cursor-pointer">
-                <button onclick="confirmDeleteAll()" class="w-full md:w-auto text-red-400 py-2 text-[9px] font-black uppercase tracking-widest">Wipe Data</button>
+            <div id="results-area">
+                <!-- Data will show here -->
+                <div class="text-center py-20 text-slate-300 font-bold uppercase italic text-sm">Search SR. NO to begin</div>
             </div>
-
-            <!-- Search Area -->
-            <div class="bg-white p-2 rounded-[2rem] shadow-xl border-[4px] border-emerald-50">
-                <div class="flex flex-col sm:flex-row gap-2">
-                    <input type="text" id="search-input" onkeyup="handleSearchInput(event)" placeholder="SEARCH NAME / ID / FAMILY..." class="flex-1 p-4 bg-slate-50 border-none rounded-2xl outline-none font-bold text-slate-800 text-sm placeholder:text-slate-300 uppercase">
-                    <button onclick="performSearch()" class="bg-emerald-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-[11px] shadow-lg">Find</button>
-                </div>
-            </div>
-
-            <!-- Content Area -->
-            <div id="results-area" class="space-y-6">
-                <!-- Data injected here -->
-            </div>
-
-            <div id="empty-state" class="text-center py-20 text-slate-200 font-black uppercase tracking-widest italic hidden text-xl">No Results</div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal -->
-<div id="log-modal" class="fixed inset-0 bg-slate-900/95 hidden z-[100] flex items-center justify-center p-4 backdrop-blur-md">
-    <div class="bg-white w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-2xl">
-        <div class="bg-slate-900 p-6 flex justify-between items-start text-white">
-            <div>
-                <h3 id="modal-name" class="font-black text-xl uppercase tracking-tighter italic">Name</h3>
-                <p id="modal-id" class="text-[9px] font-black text-emerald-400 uppercase mt-1">ID</p>
-            </div>
-            <button onclick="closeModal()" class="text-white opacity-50 text-2xl">✕</button>
-        </div>
-        <div class="p-6 space-y-4">
-            <textarea id="modal-remark" placeholder="REMARKS..." class="w-full h-32 bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none font-bold text-slate-700 text-sm"></textarea>
-            <div class="flex gap-2">
-                <a id="modal-call" href="#" class="flex-1 bg-emerald-100 text-emerald-800 py-4 rounded-xl text-center font-black uppercase text-[10px]">Call</a>
-                <button onclick="saveModalLog()" class="flex-[2] bg-slate-900 text-white py-4 rounded-xl font-black uppercase text-[10px]">Save Log</button>
-            </div>
-            <div id="modal-history" class="max-h-40 overflow-y-auto space-y-2"></div>
         </div>
     </div>
 </div>
@@ -172,7 +135,6 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
     const appId = "theeducator-37df7";
-    let activeStudentId = null;
 
     const getCol = (name) => db.collection('artifacts').doc(appId).collection('public').doc('data').collection(name);
 
@@ -180,8 +142,6 @@
         if (user) {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
-            updateCounts();
-            loadInitialData();
         } else {
             document.getElementById('login-screen').classList.remove('hidden');
             document.getElementById('dashboard').classList.add('hidden');
@@ -192,289 +152,100 @@
         const u = document.getElementById('username').value.trim();
         const p = document.getElementById('password').value;
         const email = u.includes('@') ? u : `${u}@school.com`;
-        try { await auth.signInWithEmailAndPassword(email, p); } catch(e) { document.getElementById('login-error').classList.remove('hidden'); }
+        try { await auth.signInWithEmailAndPassword(email, p); } catch(e) { alert("Invalid Credentials"); }
     }
 
     function handleLogout() { auth.signOut(); }
 
-    async function updateCounts() {
-        const todayStr = new Date().toLocaleDateString();
-        const [cSnap, todayLogs] = await Promise.all([
-            getCol('contacts').get(),
-            getCol('logs').where('date', '==', todayStr).get()
-        ]);
-        document.getElementById('count-contacts').innerText = cSnap.size;
-        document.getElementById('count-logs-today').innerText = todayLogs.size;
-    }
-
-    async function loadInitialData() {
-        const snap = await getCol('contacts').limit(15).get();
-        let list = []; snap.forEach(d => list.push({id: d.id, ...d.data()}));
-        renderListView(list);
-    }
-
-    function handleSearchInput(e) {
-        if(e.key === 'Enter') performSearch();
-        if(e.target.value === "") loadInitialData();
-    }
-
     async function performSearch() {
-        const term = document.getElementById('search-input').value.trim();
-        if (!term) return;
+        const id = document.getElementById('search-input').value.trim();
+        if (!id) return;
         
         const resultsArea = document.getElementById('results-area');
-        resultsArea.innerHTML = `<div class="text-center font-black py-10 uppercase animate-pulse">Searching...</div>`;
-        
-        let primaryStudent = null;
-        let family = [];
+        resultsArea.innerHTML = `<div class="text-center font-black py-10 uppercase animate-pulse text-xs text-slate-400">Fetching Data...</div>`;
 
-        const byId = await getCol('contacts').doc(term).get();
-        if (byId.exists) {
-            primaryStudent = { id: byId.id, ...byId.data() };
-            const famCode = primaryStudent.search_family;
-            if(famCode) {
-                const fSnap = await getCol('contacts').where('search_family', '==', famCode).get();
-                fSnap.forEach(d => family.push({id: d.id, ...d.data()}));
+        try {
+            const doc = await getCol('contacts').doc(id).get();
+            if (!doc.exists) {
+                resultsArea.innerHTML = `<div class="text-center py-10 font-bold text-red-400 uppercase text-xs">ID Not Found</div>`;
+                return;
             }
-        } else {
-            const byName = await getCol('contacts').where('STUDENT NAME', '>=', term.toUpperCase()).where('STUDENT NAME', '<=', term.toUpperCase() + '\uf8ff').get();
-            if(!byName.empty) {
-                byName.forEach(d => family.push({id: d.id, ...d.data()}));
-                primaryStudent = family[0];
-            } else {
-                const byFam = await getCol('contacts').where('search_family', '==', term).get();
-                if(!byFam.empty) {
-                    byFam.forEach(d => family.push({id: d.id, ...d.data()}));
-                    primaryStudent = family[0];
+
+            const data = doc.data();
+            const familyCode = data['FMLY #'] || data['search_family'] || "";
+            
+            let familyHtml = "";
+            if (familyCode) {
+                const famSnap = await getCol('contacts').where('search_family', '==', familyCode.toString()).get();
+                if (!famSnap.empty) {
+                    familyHtml = `<div class="mt-6 mb-2 ml-2 font-black text-[10px] text-slate-400 uppercase tracking-widest italic">Family Details</div>`;
+                    famSnap.forEach(fd => {
+                        const fData = fd.data();
+                        familyHtml += `
+                            <div class="bg-white p-3 rounded-xl border border-slate-200 mb-2 flex justify-between items-center shadow-sm">
+                                <div>
+                                    <p class="text-[11px] font-black text-slate-800 uppercase">${fData['STUDENT NAME']}</p>
+                                    <p class="text-[9px] font-bold text-slate-400 uppercase">Class: ${fData['Class'] || 'N/A'}</p>
+                                </div>
+                                <div class="bg-blue-50 text-blue-600 text-[9px] font-black px-2 py-1 rounded">SR: ${fd.id}</div>
+                            </div>
+                        `;
+                    });
                 }
             }
-        }
 
-        if(!primaryStudent) {
-            resultsArea.innerHTML = "";
-            document.getElementById('empty-state').classList.remove('hidden');
-            return;
+            renderDetails(data, id, familyHtml);
+        } catch (e) {
+            resultsArea.innerHTML = `<div class="text-center py-10 font-bold text-red-400 uppercase text-xs">Error Loading Data</div>`;
         }
-
-        document.getElementById('empty-state').classList.add('hidden');
-        renderDetailedView(primaryStudent, family);
     }
 
-    function renderListView(list) {
+    function renderDetails(data, id, familyHtml) {
+        const mob = data['MOBILE'] || data['Mobile No'] || 'N/A';
+        const wa = data['WHATSAPP'] || mob;
+
         document.getElementById('results-area').innerHTML = `
-            <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
-                <div class="p-3 bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest">Database Preview</div>
-                ${renderTable(list)}
-            </div>
-        `;
-    }
-
-    async function renderDetailedView(main, family) {
-        const resultsArea = document.getElementById('results-area');
-        const mob = main['MOBILE'] || main['Mobile No'] || 'N/A';
-        const wa = main['WHATSAPP'] || mob;
-
-        const logSnap = await getCol('logs').where('student_id', '==', main.id).get();
-        const logs = logSnap.docs.map(l => l.data()).sort((a,b) => b.timestamp - a.timestamp);
-
-        resultsArea.innerHTML = `
-            <div class="card-container">
-                <div class="bg-slate-900 p-6 flex flex-col justify-between items-center text-white gap-4">
-                    <div class="text-center">
-                        <h2 class="text-xl font-black uppercase tracking-tighter text-emerald-400 italic">${main['STUDENT NAME']}</h2>
-                        <p class="text-[8px] font-black opacity-50 uppercase tracking-widest">FAMILY ID: ${main.search_family || 'N/A'}</p>
-                    </div>
-                    <button onclick='openLogModal(${JSON.stringify({id: main.id, name: main['STUDENT NAME'], mob: mob})})' class="bg-emerald-600 px-8 py-3 rounded-xl text-[9px] font-black uppercase w-full">Record Remark</button>
+            <div class="info-card mt-4 shadow-sm">
+                <div class="info-row">
+                    <div class="info-label">STUDENT NAME</div>
+                    <div class="info-value"><span class="text-blue-900">${data['STUDENT NAME'] || 'N/A'}</span></div>
                 </div>
-
-                <div class="p-4 space-y-4">
-                    <div class="space-y-0.5 border rounded-2xl overflow-hidden">
-                        <div class="detail-row"><div class="detail-label">STUDENT NAME</div><div class="detail-value">${main['STUDENT NAME'] || 'N/A'}</div></div>
-                        <div class="detail-row"><div class="detail-label">FATHER NAME</div><div class="detail-value">${main['FATHER NAME'] || 'N/A'}</div></div>
-                        <div class="detail-row"><div class="detail-label">ID / SR. NO</div><div class="detail-value">${main.id}</div></div>
-                        <div class="detail-row"><div class="detail-label">R. # / ROLL</div><div class="detail-value">${main['R. #'] || main['ROLL NO'] || 'N/A'}</div></div>
-                        <div class="detail-row"><div class="detail-label">CLASS / SEC</div><div class="detail-value">${main['Class'] || 'N/A'} - ${main['Section'] || 'N/A'}</div></div>
-                        <div class="detail-row"><div class="detail-label">REFERENCE</div><div class="detail-value">${main['Reference'] || 'N/A'}</div></div>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <div class="space-y-0.5 border rounded-2xl overflow-hidden">
-                             <div class="detail-row"><div class="detail-label">MOBILE</div><div class="detail-value">${mob}</div></div>
-                             <div class="detail-row"><div class="detail-label">WHATSAPP</div><div class="detail-value">${wa}</div></div>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-3">
-                             <a href="tel:${mob}" class="bg-slate-900 text-white text-center py-4 rounded-xl font-black text-[10px] uppercase">CALL</a>
-                             <a href="https://wa.me/${wa.toString().replace(/\D/g,'')}" target="_blank" class="bg-emerald-700 text-white text-center py-4 rounded-xl font-black text-[10px] uppercase">WHATSAPP</a>
-                        </div>
-
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                             <span class="text-[8px] font-black text-slate-400 uppercase mb-3 block tracking-widest">CALL HISTORY</span>
-                             <div class="max-h-48 overflow-y-auto space-y-2 pr-1">
-                                ${logs.length ? logs.map(l => `
-                                    <div class="history-card">
-                                        <div class="flex justify-between items-center mb-1">
-                                            <span class="text-[8px] font-black text-emerald-800 uppercase">${l.date}</span>
-                                            <span class="text-[8px] font-bold text-slate-400">${l.time}</span>
-                                        </div>
-                                        <p class="text-[11px] font-bold text-slate-600 italic">"${l.remark}"</p>
-                                    </div>
-                                `).join('') : '<p class="text-[9px] font-bold text-slate-300 uppercase py-4 text-center">No Records</p>'}
-                             </div>
-                        </div>
-                    </div>
+                <div class="info-row">
+                    <div class="info-label">FATHER NAME</div>
+                    <div class="info-value"><span>${data['FATHER NAME'] || 'N/A'}</span></div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">SR. NO / ID</div>
+                    <div class="info-value"><span class="value-box">${id}</span></div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">CLASS</div>
+                    <div class="info-value"><span class="value-box">${data['Class'] || 'N/A'}</span></div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">SECTION</div>
+                    <div class="info-value"><span class="value-box">${data['Section'] || 'N/A'}</span></div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
-                <div class="p-3 bg-slate-50 border-b">
-                    <h3 class="text-[9px] font-black uppercase text-slate-500 italic">Related Family</h3>
+            <div class="info-card shadow-sm">
+                <div class="info-row">
+                    <div class="info-label">MOBILE NO</div>
+                    <div class="info-value"><span class="text-slate-600">${mob}</span></div>
                 </div>
-                ${renderTable(family)}
+                <div class="info-row">
+                    <div class="info-label">WHATSAPP</div>
+                    <div class="info-value"><span class="text-slate-600">${wa}</span></div>
+                </div>
             </div>
+
+            <div class="grid grid-cols-2 gap-3 mt-6">
+                <a href="tel:${mob}" class="btn-call text-center py-4 rounded-2xl font-black text-[11px] uppercase shadow-lg active:scale-95 transition-transform">Call Now</a>
+                <a href="https://wa.me/${wa.toString().replace(/\D/g,'')}" target="_blank" class="btn-wa text-center py-4 rounded-2xl font-black text-[11px] uppercase shadow-lg active:scale-95 transition-transform">WhatsApp</a>
+            </div>
+
+            ${familyHtml}
         `;
-    }
-
-    function renderTable(list) {
-        if(!list.length) return `<div class="p-6 text-center text-slate-300 font-black text-xs uppercase">No Entries</div>`;
-        return `
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr>
-                            <th class="table-header">ID</th>
-                            <th class="table-header">NAME</th>
-                            <th class="table-header">CLASS</th>
-                            <th class="table-header">ACTION</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${list.map(f => `
-                            <tr class="hover:bg-slate-50 border-b border-slate-50">
-                                <td class="table-cell">${f.id}</td>
-                                <td class="table-cell font-black text-blue-700">${f['STUDENT NAME'] || 'N/A'}</td>
-                                <td class="table-cell">${f['Class'] || 'N/A'}</td>
-                                <td class="table-cell">
-                                    <button onclick='openLogModal(${JSON.stringify({id: f.id, name: f['STUDENT NAME'], mob: f['MOBILE'] || f['Mobile No']})})' class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded font-black text-[8px] uppercase">LOG</button>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
-    }
-
-    async function openLogModal(student) {
-        activeStudentId = student.id;
-        document.getElementById('modal-name').innerText = student.name;
-        document.getElementById('modal-id').innerText = `ID: ${student.id}`;
-        document.getElementById('modal-call').href = `tel:${student.mob}`;
-        document.getElementById('modal-remark').value = "";
-        
-        const logs = await getCol('logs').where('student_id', '==', student.id).get();
-        const items = logs.docs.map(l => l.data()).sort((a,b) => b.timestamp - a.timestamp);
-        
-        document.getElementById('modal-history').innerHTML = items.length ? items.map(l => `
-            <div class="bg-slate-50 p-3 rounded-xl border-l-4 border-blue-500 mb-2">
-                <p class="text-[8px] font-black text-slate-400 mb-1">${l.date} @ ${l.time}</p>
-                <p class="text-xs font-bold text-slate-700 italic">"${l.remark}"</p>
-            </div>
-        `).join('') : `<p class="text-center py-4 text-slate-300 font-black uppercase text-[8px]">No previous logs</p>`;
-
-        document.getElementById('log-modal').classList.remove('hidden');
-    }
-
-    function closeModal() { document.getElementById('log-modal').classList.add('hidden'); }
-
-    async function saveModalLog() {
-        const text = document.getElementById('modal-remark').value.trim();
-        if (!text) return;
-        const now = new Date();
-        const payload = { 
-            student_id: activeStudentId, 
-            remark: text, 
-            date: now.toLocaleDateString(), 
-            time: now.toLocaleTimeString(), 
-            timestamp: now.getTime()
-        };
-        await getCol('logs').add(payload);
-        closeModal();
-        updateCounts();
-        performSearch();
-    }
-
-    document.getElementById('file-contacts').addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = async (evt) => {
-            const wb = XLSX.read(evt.target.result, { type: 'binary' });
-            const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            for(let i=0; i<data.length; i+=100) {
-                const batch = db.batch();
-                data.slice(i, i+100).forEach(item => {
-                    const id = (item['SR. NO.'] || item['SR NO'] || item['id'] || '').toString().trim();
-                    const fam = (item['FMLY #'] || item['FAMILY #'] || '').toString().trim();
-                    if(id) {
-                        const p = { ...item, search_family: fam };
-                        if(item['STUDENT NAME']) p['STUDENT NAME'] = item['STUDENT NAME'].toString().toUpperCase();
-                        batch.set(getCol('contacts').doc(id), p, { merge: true });
-                    }
-                });
-                await batch.commit();
-            }
-            alert("Database Updated."); updateCounts(); loadInitialData();
-        };
-        reader.readAsBinaryString(file);
-    });
-
-    async function downloadReport(type) {
-        const [lSnap, cSnap] = await Promise.all([getCol('logs').get(), getCol('contacts').get()]);
-        const sMap = new Map(); cSnap.forEach(d => sMap.set(d.id, d.data()));
-        
-        const rows = lSnap.docs.map(doc => {
-            const l = doc.data(); const s = sMap.get(l.student_id) || {};
-            return {
-                "DATE": l.date,
-                "TIME": l.time,
-                "ID": l.student_id,
-                "STUDENT": s['STUDENT NAME'] || "N/A",
-                "FATHER": s['FATHER NAME'] || "N/A",
-                "CLASS": s['Class'] || "N/A",
-                "SECTION": s['Section'] || "N/A",
-                "MOBILE": s['MOBILE'] || s['Mobile No'] || "N/A",
-                "REMARK": l.remark
-            };
-        });
-
-        rows.sort((a,b) => new Date(b.DATE) - new Date(a.DATE));
-
-        if (type === 'excel') {
-            const ws = XLSX.utils.json_to_sheet(rows);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Calls");
-            XLSX.writeFile(wb, `Call_Report_${new Date().toLocaleDateString()}.xlsx`);
-        } else {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'pt', 'a4');
-            doc.text("CALL REPORT", 40, 40);
-            doc.autoTable({ 
-                head: [["DATE", "ID", "STUDENT", "REMARK"]], 
-                body: rows.map(r => [r.DATE, r.ID, r.STUDENT, r.REMARK]),
-                startY: 60,
-                styles: { fontSize: 7 }
-            });
-            doc.save("Report.pdf");
-        }
-    }
-
-    async function confirmDeleteAll() {
-        if(confirm("Confirm Wipe?")) {
-            const snap = await getCol('contacts').get();
-            const batch = db.batch(); snap.forEach(d => batch.delete(d.ref));
-            await batch.commit(); location.reload();
-        }
     }
 </script>
 </body>
