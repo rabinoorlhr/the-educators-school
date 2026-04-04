@@ -12,25 +12,35 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; overflow-x: hidden; }
         
+        /* Mobile specific adjustments for detail rows */
         .detail-row { 
             display: flex; 
             flex-direction: row; 
             align-items: center; 
-            padding: 12px 16px; 
+            padding: 10px 14px; 
             border-bottom: 1px solid #f1f5f9; 
             background: white;
-            gap: 20px;
+            gap: 12px;
+        }
+        
+        @media (max-width: 640px) {
+            .detail-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+            .detail-label { width: 100% !important; font-size: 9px; }
+            .detail-value { width: 100% !important; font-size: 13px; padding: 4px 8px; }
+            .card-container { margin: 10px; border-radius: 1.5rem; }
+            .nav-container { padding: 10px; }
+            .stats-grid { gap: 12px; }
         }
         
         .detail-label { 
-            font-size: 11px; 
-            font-weight: 900; 
+            font-size: 10px; 
+            font-weight: 800; 
             color: #064e3b;
             text-transform: uppercase; 
             letter-spacing: 0.05em;
-            width: 160px;
+            width: 140px;
             flex-shrink: 0;
         }
         
@@ -41,16 +51,16 @@
             text-transform: uppercase;
             background-color: #eff6ff; 
             padding: 6px 12px; 
-            border-radius: 8px;
+            border-radius: 6px;
             flex-grow: 1;
             border: 1px solid #dbeafe;
         }
         
-        .table-header { @apply px-3 py-4 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest text-left sticky top-0; }
-        .table-cell { @apply px-3 py-3 text-[11px] font-bold text-slate-600 border-b border-slate-100 uppercase; }
+        .table-header { @apply px-2 py-3 bg-slate-900 text-white text-[9px] font-black uppercase tracking-tighter text-left sticky top-0; }
+        .table-cell { @apply px-2 py-3 text-[10px] font-bold text-slate-600 border-b border-slate-100 uppercase whitespace-nowrap; }
         
-        .card-container { @apply bg-white rounded-[2.5rem] shadow-2xl border border-slate-200 overflow-hidden; }
-        .history-card { @apply bg-slate-50 p-4 rounded-2xl border-l-4 border-emerald-500 mb-2; }
+        .card-container { @apply bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden; }
+        .history-card { @apply bg-slate-50 p-3 rounded-xl border-l-4 border-emerald-500 mb-2; }
     </style>
 </head>
 <body>
@@ -58,100 +68,92 @@
 <div id="app" class="min-h-screen">
     <!-- Login Screen -->
     <div id="login-screen" class="flex items-center justify-center min-h-screen bg-slate-900 px-4">
-        <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md border-t-8 border-emerald-600">
-            <div class="text-center mb-10">
-                <div class="bg-emerald-700 w-20 h-20 rounded-3xl flex items-center justify-center text-white text-4xl font-black italic mx-auto mb-4 shadow-2xl rotate-3">E</div>
-                <h2 class="text-4xl font-black text-slate-800 tracking-tighter">ADMIN</h2>
-                <p class="text-emerald-600 font-black italic text-xs uppercase tracking-widest">The Educators Portal</p>
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md border-t-8 border-emerald-600">
+            <div class="text-center mb-8">
+                <div class="bg-emerald-700 w-16 h-16 rounded-2xl flex items-center justify-center text-white text-3xl font-black italic mx-auto mb-4 rotate-3">E</div>
+                <h2 class="text-3xl font-black text-slate-800 tracking-tighter">ADMIN</h2>
+                <p class="text-emerald-600 font-black italic text-[10px] uppercase tracking-widest">The Educators Portal</p>
             </div>
             <div class="space-y-4">
-                <input type="text" id="username" placeholder="USERNAME" class="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-emerald-500 font-bold text-slate-700 uppercase">
-                <input type="password" id="password" placeholder="PASSWORD" class="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-emerald-500 font-bold text-slate-700">
-                <button onclick="handleLogin()" class="w-full bg-slate-900 text-white p-5 rounded-2xl font-black uppercase tracking-[0.2em] hover:bg-emerald-700 transition-all shadow-xl">Login Access</button>
-                <p id="login-error" class="text-red-500 mt-4 text-[10px] text-center hidden font-black italic uppercase">Access Denied: Invalid Credentials</p>
+                <input type="text" id="username" placeholder="USERNAME" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-emerald-500 font-bold text-slate-700 uppercase">
+                <input type="password" id="password" placeholder="PASSWORD" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-emerald-500 font-bold text-slate-700">
+                <button onclick="handleLogin()" class="w-full bg-slate-900 text-white p-4 rounded-xl font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg">Login Access</button>
+                <p id="login-error" class="text-red-500 mt-4 text-[10px] text-center hidden font-black italic uppercase tracking-tighter">Access Denied: Invalid Credentials</p>
             </div>
         </div>
     </div>
 
     <!-- Dashboard -->
     <div id="dashboard" class="hidden">
-        <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-            <div class="flex items-center gap-4">
-                <div class="bg-emerald-700 p-2 rounded-xl text-white font-black text-2xl italic shadow-lg shadow-emerald-100">E</div>
+        <nav class="bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center sticky top-0 z-50">
+            <div class="flex items-center gap-2">
+                <div class="bg-emerald-700 p-2 rounded-lg text-white font-black text-lg italic">E</div>
                 <div>
-                    <h1 class="text-xl font-black text-slate-900 uppercase tracking-tighter leading-none">THE EDUCATORS</h1>
-                    <span class="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Management System</span>
+                    <h1 class="text-sm font-black text-slate-900 uppercase tracking-tighter leading-none">THE EDUCATORS</h1>
+                    <span class="text-[8px] font-black text-emerald-600 uppercase tracking-widest">Portal</span>
                 </div>
             </div>
-            <button onclick="handleLogout()" class="text-[10px] font-black text-red-600 bg-red-50 px-5 py-2 rounded-full hover:bg-red-600 hover:text-white transition-all uppercase tracking-widest border border-red-100">Logout</button>
+            <button onclick="handleLogout()" class="text-[9px] font-black text-red-600 bg-red-50 px-4 py-2 rounded-full hover:bg-red-600 hover:text-white transition-all uppercase border border-red-100">Logout</button>
         </nav>
 
-        <div class="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
+        <div class="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
             <!-- Stats -->
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <div class="lg:col-span-1 bg-white p-6 rounded-3xl shadow-sm border border-slate-100 text-center">
-                    <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 block">Database Size</span>
-                    <span id="count-contacts" class="text-5xl font-black text-emerald-700">0</span>
-                    <p class="text-[9px] font-bold text-slate-400 mt-2">TOTAL STUDENTS</p>
+            <div class="grid grid-cols-2 md:grid-cols-4 stats-grid gap-4">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center">
+                    <span class="text-[8px] font-black uppercase text-slate-400 tracking-widest mb-1 block">Students</span>
+                    <span id="count-contacts" class="text-2xl font-black text-emerald-700">0</span>
                 </div>
-                <div class="lg:col-span-1 bg-white p-6 rounded-3xl shadow-sm border border-slate-100 text-center">
-                    <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 block">Today's Activity</span>
-                    <span id="count-logs-today" class="text-5xl font-black text-blue-600">0</span>
-                    <p class="text-[9px] font-bold text-slate-400 mt-2 uppercase tracking-tight">CALLS MADE TODAY</p>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center">
+                    <span class="text-[8px] font-black uppercase text-slate-400 tracking-widest mb-1 block">Today Calls</span>
+                    <span id="count-logs-today" class="text-2xl font-black text-blue-600">0</span>
                 </div>
-                <div class="lg:col-span-2 bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-2xl flex flex-col items-center justify-center relative overflow-hidden">
-                    <span class="text-[11px] font-black uppercase text-emerald-400 tracking-[0.3em] mb-4 z-10">Export Records Report</span>
-                    <div class="flex gap-4 w-full z-10">
-                        <button onclick="downloadReport('excel')" class="flex-1 bg-emerald-600 py-4 rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg">Excel Report</button>
-                        <button onclick="downloadReport('pdf')" class="flex-1 bg-blue-600 py-4 rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg">PDF Report</button>
-                    </div>
+                <div class="col-span-2 bg-slate-900 text-white p-4 rounded-2xl shadow-xl flex gap-2">
+                    <button onclick="downloadReport('excel')" class="flex-1 bg-emerald-600 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-md">Excel</button>
+                    <button onclick="downloadReport('pdf')" class="flex-1 bg-blue-600 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-md">PDF</button>
                 </div>
             </div>
 
             <!-- Import -->
-            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col md:flex-row gap-6 items-center">
-                <div class="flex-1 w-full">
-                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Upload Student Database (Excel)</label>
-                    <input type="file" id="file-contacts" accept=".xlsx, .xls" class="block w-full text-xs text-slate-400 file:mr-4 file:py-3 file:px-8 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:bg-slate-900 file:text-white hover:file:bg-emerald-700 transition-all cursor-pointer">
-                </div>
-                <button onclick="confirmDeleteAll()" class="w-full md:w-auto bg-red-50 text-red-600 px-10 py-4 rounded-2xl text-[11px] font-black hover:bg-red-600 hover:text-white transition-all border border-red-100 uppercase tracking-widest">Purge Database</button>
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 items-center">
+                <input type="file" id="file-contacts" accept=".xlsx, .xls" class="block w-full text-[10px] text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[9px] file:font-black file:bg-slate-900 file:text-white cursor-pointer">
+                <button onclick="confirmDeleteAll()" class="w-full md:w-auto text-red-400 py-2 text-[9px] font-black uppercase tracking-widest">Wipe Data</button>
             </div>
 
             <!-- Search Area -->
-            <div class="bg-white p-4 rounded-[2.5rem] shadow-2xl border-[6px] border-emerald-50">
-                <div class="flex flex-col md:flex-row gap-3">
-                    <input type="text" id="search-input" onkeyup="handleSearchInput(event)" placeholder="FIND STUDENT BY NAME, ID, OR FAMILY #..." class="flex-1 p-6 bg-slate-50 border-none rounded-3xl outline-none font-black text-slate-800 text-xl placeholder:text-slate-300 uppercase">
-                    <button onclick="performSearch()" class="bg-emerald-700 text-white px-16 py-6 rounded-3xl hover:bg-emerald-800 transition-all font-black uppercase tracking-[0.2em] text-sm shadow-xl shadow-emerald-100">Search Now</button>
+            <div class="bg-white p-2 rounded-[2rem] shadow-xl border-[4px] border-emerald-50">
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <input type="text" id="search-input" onkeyup="handleSearchInput(event)" placeholder="SEARCH NAME / ID / FAMILY..." class="flex-1 p-4 bg-slate-50 border-none rounded-2xl outline-none font-bold text-slate-800 text-sm placeholder:text-slate-300 uppercase">
+                    <button onclick="performSearch()" class="bg-emerald-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-[11px] shadow-lg">Find</button>
                 </div>
             </div>
 
             <!-- Content Area -->
-            <div id="results-area" class="space-y-8 animate-in fade-in duration-500">
+            <div id="results-area" class="space-y-6">
                 <!-- Data injected here -->
             </div>
 
-            <div id="empty-state" class="text-center py-32 text-slate-200 font-black uppercase tracking-[1em] italic hidden text-2xl">No Results Found</div>
+            <div id="empty-state" class="text-center py-20 text-slate-200 font-black uppercase tracking-widest italic hidden text-xl">No Results</div>
         </div>
     </div>
 </div>
 
 <!-- Modal -->
-<div id="log-modal" class="fixed inset-0 bg-slate-900/90 hidden z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white w-full max-w-xl rounded-[3rem] overflow-hidden shadow-2xl">
-        <div class="bg-slate-900 p-8 flex justify-between items-start text-white">
+<div id="log-modal" class="fixed inset-0 bg-slate-900/95 hidden z-[100] flex items-center justify-center p-4 backdrop-blur-md">
+    <div class="bg-white w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-2xl">
+        <div class="bg-slate-900 p-6 flex justify-between items-start text-white">
             <div>
-                <h3 id="modal-name" class="font-black text-2xl uppercase tracking-tighter italic">Student Name</h3>
-                <p id="modal-id" class="text-[10px] font-black text-emerald-400 uppercase mt-1">ID: 000</p>
+                <h3 id="modal-name" class="font-black text-xl uppercase tracking-tighter italic">Name</h3>
+                <p id="modal-id" class="text-[9px] font-black text-emerald-400 uppercase mt-1">ID</p>
             </div>
-            <button onclick="closeModal()" class="text-white opacity-50 hover:opacity-100">✕ Close</button>
+            <button onclick="closeModal()" class="text-white opacity-50 text-2xl">✕</button>
         </div>
-        <div class="p-8 space-y-6">
-            <textarea id="modal-remark" placeholder="ENTER CALL REMARKS..." class="w-full h-40 bg-slate-50 border-2 border-slate-100 rounded-3xl p-6 outline-none font-bold text-slate-700 italic text-lg"></textarea>
-            <div class="flex gap-4">
-                <a id="modal-call" href="#" class="flex-1 bg-emerald-100 text-emerald-800 py-5 rounded-2xl text-center font-black uppercase text-[11px] tracking-widest">Call</a>
-                <button onclick="saveModalLog()" class="flex-[2] bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em]">Save Log</button>
+        <div class="p-6 space-y-4">
+            <textarea id="modal-remark" placeholder="REMARKS..." class="w-full h-32 bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none font-bold text-slate-700 text-sm"></textarea>
+            <div class="flex gap-2">
+                <a id="modal-call" href="#" class="flex-1 bg-emerald-100 text-emerald-800 py-4 rounded-xl text-center font-black uppercase text-[10px]">Call</a>
+                <button onclick="saveModalLog()" class="flex-[2] bg-slate-900 text-white py-4 rounded-xl font-black uppercase text-[10px]">Save Log</button>
             </div>
-            <div id="modal-history" class="max-h-48 overflow-y-auto space-y-3"></div>
+            <div id="modal-history" class="max-h-40 overflow-y-auto space-y-2"></div>
         </div>
     </div>
 </div>
@@ -206,7 +208,7 @@
     }
 
     async function loadInitialData() {
-        const snap = await getCol('contacts').limit(20).get();
+        const snap = await getCol('contacts').limit(15).get();
         let list = []; snap.forEach(d => list.push({id: d.id, ...d.data()}));
         renderListView(list);
     }
@@ -221,7 +223,7 @@
         if (!term) return;
         
         const resultsArea = document.getElementById('results-area');
-        resultsArea.innerHTML = `<div class="text-center font-black py-20 uppercase animate-pulse">Searching...</div>`;
+        resultsArea.innerHTML = `<div class="text-center font-black py-10 uppercase animate-pulse">Searching...</div>`;
         
         let primaryStudent = null;
         let family = [];
@@ -260,8 +262,8 @@
 
     function renderListView(list) {
         document.getElementById('results-area').innerHTML = `
-            <div class="bg-white rounded-[2rem] border overflow-hidden shadow-sm">
-                <div class="p-4 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest">Recent Archive Entry</div>
+            <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
+                <div class="p-3 bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest">Database Preview</div>
                 ${renderTable(list)}
             </div>
         `;
@@ -277,55 +279,56 @@
 
         resultsArea.innerHTML = `
             <div class="card-container">
-                <div class="bg-slate-900 p-8 flex flex-col md:flex-row justify-between items-center text-white gap-6">
-                    <div class="text-center md:text-left">
-                        <h2 class="text-3xl font-black uppercase tracking-tighter text-emerald-400 italic">${main['STUDENT NAME']}</h2>
-                        <p class="text-[10px] font-black opacity-60 uppercase tracking-widest">Family ID: ${main.search_family || 'N/A'}</p>
+                <div class="bg-slate-900 p-6 flex flex-col justify-between items-center text-white gap-4">
+                    <div class="text-center">
+                        <h2 class="text-xl font-black uppercase tracking-tighter text-emerald-400 italic">${main['STUDENT NAME']}</h2>
+                        <p class="text-[8px] font-black opacity-50 uppercase tracking-widest">FAMILY ID: ${main.search_family || 'N/A'}</p>
                     </div>
-                    <button onclick='openLogModal(${JSON.stringify({id: main.id, name: main['STUDENT NAME'], mob: mob})})' class="bg-emerald-600 px-10 py-4 rounded-2xl text-[11px] font-black uppercase">Add Call Remark</button>
+                    <button onclick='openLogModal(${JSON.stringify({id: main.id, name: main['STUDENT NAME'], mob: mob})})' class="bg-emerald-600 px-8 py-3 rounded-xl text-[9px] font-black uppercase w-full">Record Remark</button>
                 </div>
 
-                <div class="p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="space-y-0.5 border rounded-3xl overflow-hidden h-fit">
+                <div class="p-4 space-y-4">
+                    <div class="space-y-0.5 border rounded-2xl overflow-hidden">
                         <div class="detail-row"><div class="detail-label">STUDENT NAME</div><div class="detail-value">${main['STUDENT NAME'] || 'N/A'}</div></div>
                         <div class="detail-row"><div class="detail-label">FATHER NAME</div><div class="detail-value">${main['FATHER NAME'] || 'N/A'}</div></div>
-                        <div class="detail-row"><div class="detail-label">SR. NO / ID</div><div class="detail-value">${main.id}</div></div>
-                        <div class="detail-row"><div class="detail-label">CLASS</div><div class="detail-value">${main['Class'] || 'N/A'}</div></div>
-                        <div class="detail-row"><div class="detail-label">SECTION</div><div class="detail-value">${main['Section'] || 'N/A'}</div></div>
+                        <div class="detail-row"><div class="detail-label">ID / SR. NO</div><div class="detail-value">${main.id}</div></div>
+                        <div class="detail-row"><div class="detail-label">R. # / ROLL</div><div class="detail-value">${main['R. #'] || main['ROLL NO'] || 'N/A'}</div></div>
+                        <div class="detail-row"><div class="detail-label">CLASS / SEC</div><div class="detail-value">${main['Class'] || 'N/A'} - ${main['Section'] || 'N/A'}</div></div>
+                        <div class="detail-row"><div class="detail-label">REFERENCE</div><div class="detail-value">${main['Reference'] || 'N/A'}</div></div>
                     </div>
                     
                     <div class="space-y-4">
-                        <div class="space-y-0.5 border rounded-3xl overflow-hidden">
-                             <div class="detail-row"><div class="detail-label">MOBILE NO</div><div class="detail-value">${mob}</div></div>
+                        <div class="space-y-0.5 border rounded-2xl overflow-hidden">
+                             <div class="detail-row"><div class="detail-label">MOBILE</div><div class="detail-value">${mob}</div></div>
                              <div class="detail-row"><div class="detail-label">WHATSAPP</div><div class="detail-value">${wa}</div></div>
                         </div>
                         
-                        <div class="grid grid-cols-2 gap-4">
-                             <a href="tel:${mob}" class="bg-slate-900 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest">Call Now</a>
-                             <a href="https://wa.me/${wa.toString().replace(/\D/g,'')}" target="_blank" class="bg-emerald-700 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest">WhatsApp</a>
+                        <div class="grid grid-cols-2 gap-3">
+                             <a href="tel:${mob}" class="bg-slate-900 text-white text-center py-4 rounded-xl font-black text-[10px] uppercase">CALL</a>
+                             <a href="https://wa.me/${wa.toString().replace(/\D/g,'')}" target="_blank" class="bg-emerald-700 text-white text-center py-4 rounded-xl font-black text-[10px] uppercase">WHATSAPP</a>
                         </div>
 
-                        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-inner">
-                             <span class="text-[10px] font-black text-slate-400 uppercase mb-4 block tracking-widest">Call History For ${main['FATHER NAME']}</span>
-                             <div class="max-h-64 overflow-y-auto space-y-3 pr-2">
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                             <span class="text-[8px] font-black text-slate-400 uppercase mb-3 block tracking-widest">CALL HISTORY</span>
+                             <div class="max-h-48 overflow-y-auto space-y-2 pr-1">
                                 ${logs.length ? logs.map(l => `
                                     <div class="history-card">
                                         <div class="flex justify-between items-center mb-1">
-                                            <span class="text-[9px] font-black text-emerald-800 uppercase">${l.date}</span>
+                                            <span class="text-[8px] font-black text-emerald-800 uppercase">${l.date}</span>
                                             <span class="text-[8px] font-bold text-slate-400">${l.time}</span>
                                         </div>
-                                        <p class="text-xs font-bold text-slate-600 italic leading-snug">"${l.remark}"</p>
+                                        <p class="text-[11px] font-bold text-slate-600 italic">"${l.remark}"</p>
                                     </div>
-                                `).join('') : '<p class="text-[10px] font-bold text-slate-300 uppercase py-10 text-center">No call records found</p>'}
+                                `).join('') : '<p class="text-[9px] font-bold text-slate-300 uppercase py-4 text-center">No Records</p>'}
                              </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-[2rem] border overflow-hidden shadow-sm">
-                <div class="p-6 bg-slate-50 border-b">
-                    <h3 class="text-[11px] font-black uppercase text-slate-500 italic">Related Family Members</h3>
+            <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
+                <div class="p-3 bg-slate-50 border-b">
+                    <h3 class="text-[9px] font-black uppercase text-slate-500 italic">Related Family</h3>
                 </div>
                 ${renderTable(family)}
             </div>
@@ -333,18 +336,16 @@
     }
 
     function renderTable(list) {
-        if(!list.length) return `<div class="p-10 text-center text-slate-300 font-black">No Records</div>`;
+        if(!list.length) return `<div class="p-6 text-center text-slate-300 font-black text-xs uppercase">No Entries</div>`;
         return `
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                     <thead>
                         <tr>
-                            <th class="table-header">SR #</th>
-                            <th class="table-header">Student Name</th>
-                            <th class="table-header">Father Name</th>
-                            <th class="table-header">Class</th>
-                            <th class="table-header">Section</th>
-                            <th class="table-header">Action</th>
+                            <th class="table-header">ID</th>
+                            <th class="table-header">NAME</th>
+                            <th class="table-header">CLASS</th>
+                            <th class="table-header">ACTION</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -352,11 +353,9 @@
                             <tr class="hover:bg-slate-50 border-b border-slate-50">
                                 <td class="table-cell">${f.id}</td>
                                 <td class="table-cell font-black text-blue-700">${f['STUDENT NAME'] || 'N/A'}</td>
-                                <td class="table-cell">${f['FATHER NAME'] || 'N/A'}</td>
                                 <td class="table-cell">${f['Class'] || 'N/A'}</td>
-                                <td class="table-cell">${f['Section'] || 'N/A'}</td>
                                 <td class="table-cell">
-                                    <button onclick='openLogModal(${JSON.stringify({id: f.id, name: f['STUDENT NAME'], mob: f['MOBILE'] || f['Mobile No']})})' class="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg font-black text-[9px] uppercase hover:bg-emerald-700 hover:text-white transition-all">Log Call</button>
+                                    <button onclick='openLogModal(${JSON.stringify({id: f.id, name: f['STUDENT NAME'], mob: f['MOBILE'] || f['Mobile No']})})' class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded font-black text-[8px] uppercase">LOG</button>
                                 </td>
                             </tr>
                         `).join('')}
@@ -369,7 +368,7 @@
     async function openLogModal(student) {
         activeStudentId = student.id;
         document.getElementById('modal-name').innerText = student.name;
-        document.getElementById('modal-id').innerText = `REG NO: ${student.id}`;
+        document.getElementById('modal-id').innerText = `ID: ${student.id}`;
         document.getElementById('modal-call').href = `tel:${student.mob}`;
         document.getElementById('modal-remark').value = "";
         
@@ -377,11 +376,11 @@
         const items = logs.docs.map(l => l.data()).sort((a,b) => b.timestamp - a.timestamp);
         
         document.getElementById('modal-history').innerHTML = items.length ? items.map(l => `
-            <div class="bg-slate-50 p-4 rounded-2xl border-l-4 border-blue-500 mb-2">
-                <p class="text-[9px] font-black text-slate-400 mb-1">${l.date} - ${l.time}</p>
-                <p class="text-sm font-bold text-slate-700 italic">"${l.remark}"</p>
+            <div class="bg-slate-50 p-3 rounded-xl border-l-4 border-blue-500 mb-2">
+                <p class="text-[8px] font-black text-slate-400 mb-1">${l.date} @ ${l.time}</p>
+                <p class="text-xs font-bold text-slate-700 italic">"${l.remark}"</p>
             </div>
-        `).join('') : `<p class="text-center py-6 text-slate-300 font-black uppercase text-[10px]">No logs found</p>`;
+        `).join('') : `<p class="text-center py-4 text-slate-300 font-black uppercase text-[8px]">No previous logs</p>`;
 
         document.getElementById('log-modal').classList.remove('hidden');
     }
@@ -397,11 +396,9 @@
             remark: text, 
             date: now.toLocaleDateString(), 
             time: now.toLocaleTimeString(), 
-            timestamp: now.getTime(),
-            year: now.getFullYear()
+            timestamp: now.getTime()
         };
         await getCol('logs').add(payload);
-        await getCol('contacts').doc(activeStudentId).set({ last_remark: text }, { merge: true });
         closeModal();
         updateCounts();
         performSearch();
@@ -427,7 +424,7 @@
                 });
                 await batch.commit();
             }
-            alert("Database Synced."); updateCounts(); loadInitialData();
+            alert("Database Updated."); updateCounts(); loadInitialData();
         };
         reader.readAsBinaryString(file);
     });
@@ -451,30 +448,29 @@
             };
         });
 
-        // Sort by Date primarily
         rows.sort((a,b) => new Date(b.DATE) - new Date(a.DATE));
 
         if (type === 'excel') {
             const ws = XLSX.utils.json_to_sheet(rows);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Call History Report");
-            XLSX.writeFile(wb, `Educators_Call_Report_${new Date().toLocaleDateString()}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, "Calls");
+            XLSX.writeFile(wb, `Call_Report_${new Date().toLocaleDateString()}.xlsx`);
         } else {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'pt', 'a4');
-            doc.text("EDUCATORS CALL LOG REPORT", 40, 40);
+            const doc = new jsPDF('p', 'pt', 'a4');
+            doc.text("CALL REPORT", 40, 40);
             doc.autoTable({ 
-                head: [["DATE", "TIME", "ID", "STUDENT", "FATHER", "CLASS", "SEC", "REMARK"]], 
-                body: rows.map(r => [r.DATE, r.TIME, r.ID, r.STUDENT, r.FATHER, r.CLASS, r.SECTION, r.REMARK]),
+                head: [["DATE", "ID", "STUDENT", "REMARK"]], 
+                body: rows.map(r => [r.DATE, r.ID, r.STUDENT, r.REMARK]),
                 startY: 60,
-                styles: { fontSize: 8 }
+                styles: { fontSize: 7 }
             });
-            doc.save("Educators_Call_Report.pdf");
+            doc.save("Report.pdf");
         }
     }
 
     async function confirmDeleteAll() {
-        if(confirm("Wipe all data?")) {
+        if(confirm("Confirm Wipe?")) {
             const snap = await getCol('contacts').get();
             const batch = db.batch(); snap.forEach(d => batch.delete(d.ref));
             await batch.commit(); location.reload();
