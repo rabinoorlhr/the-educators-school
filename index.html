@@ -27,7 +27,7 @@
 <body>
 
 <div id="app" class="min-h-screen pb-10">
-    <!-- Login Section -->
+    <!-- Login Screen -->
     <div id="login-screen" class="flex items-center justify-center min-h-screen p-6 bg-slate-900">
         <div class="bg-white p-8 rounded-[2rem] w-full max-w-sm shadow-2xl">
             <div class="text-center mb-8">
@@ -52,38 +52,38 @@
                 </div>
             </div>
             <div class="flex gap-1">
-                <button onclick="downloadReport('excel')" class="text-[8px] font-black text-emerald-700 bg-emerald-50 px-3 py-2 rounded-full uppercase border border-emerald-100">Excel</button>
-                <button onclick="downloadReport('pdf')" class="text-[8px] font-black text-blue-700 bg-blue-50 px-3 py-2 rounded-full uppercase border border-blue-100">PDF</button>
+                <button onclick="downloadReport('excel')" class="text-[8px] font-black text-emerald-700 bg-emerald-50 px-3 py-2 rounded-full uppercase border border-emerald-100">Excel Report</button>
+                <button onclick="downloadReport('pdf')" class="text-[8px] font-black text-blue-700 bg-blue-50 px-3 py-2 rounded-full uppercase border border-blue-100">PDF Report</button>
                 <button onclick="handleLogout()" class="text-[8px] font-black text-red-500 bg-red-50 px-3 py-2 rounded-full uppercase border border-red-100">Logout</button>
             </div>
         </header>
 
         <div class="p-4 max-w-5xl mx-auto space-y-6">
-            <!-- Controls -->
+            <!-- Stats -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between">
                     <div>
-                        <p class="text-[9px] font-black text-slate-400 uppercase">Database Records</p>
+                        <p class="text-[9px] font-black text-slate-400 uppercase">Total Contacts</p>
                         <p id="count-contacts" class="text-xl font-black text-blue-600">0</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-[9px] font-black text-slate-400 uppercase">Call Logs</p>
+                        <p class="text-[9px] font-black text-slate-400 uppercase">Total Call Logs</p>
                         <p id="count-logs" class="text-xl font-black text-emerald-600">0</p>
                     </div>
                 </div>
                 <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
-                    <p class="text-[9px] font-black text-slate-400 uppercase mb-2">Import Contact List</p>
+                    <p class="text-[9px] font-black text-slate-400 uppercase mb-2">Import Students (Excel)</p>
                     <input type="file" id="file-contacts" accept=".xlsx, .xls" class="text-[8px] font-bold text-slate-500 w-full">
                 </div>
             </div>
 
             <!-- Search Bar -->
             <div class="search-container flex gap-2">
-                <input type="text" id="search-input" placeholder="Search Student SR No..." class="flex-1 p-3 pl-5 outline-none font-bold text-slate-800 uppercase text-sm" onkeyup="if(event.key==='Enter') performSearch()">
+                <input type="text" id="search-input" placeholder="Enter SR No..." class="flex-1 p-3 pl-5 outline-none font-bold text-slate-800 uppercase text-sm" onkeyup="if(event.key==='Enter') performSearch()">
                 <button onclick="performSearch()" class="bg-slate-900 text-white px-6 py-3 rounded-[14px] font-black uppercase text-[10px] hover:bg-black transition-all">Search</button>
             </div>
 
-            <!-- Content Area -->
+            <!-- Results Area -->
             <div id="results-area" class="space-y-6"></div>
         </div>
     </div>
@@ -123,7 +123,7 @@
         const p = document.getElementById('password').value;
         if(!u || !p) return;
         const email = u.includes('@') ? u : `${u}@school.com`;
-        try { await auth.signInWithEmailAndPassword(email, p); } catch(e) { alert("Invalid Login"); }
+        try { await auth.signInWithEmailAndPassword(email, p); } catch(e) { alert("Login Fail"); }
     }
 
     function handleLogout() { auth.signOut(); }
@@ -139,47 +139,42 @@
     async function performSearch() {
         const term = document.getElementById('search-input').value.trim();
         const resultsArea = document.getElementById('results-area');
-        resultsArea.innerHTML = `<div class="text-center py-20 font-black text-slate-300 animate-pulse text-xs uppercase tracking-widest">Loading...</div>`;
+        resultsArea.innerHTML = `<div class="text-center py-20 font-black text-slate-300 animate-pulse text-xs uppercase tracking-widest">Searching...</div>`;
 
         try {
             if (!term) {
-                // DEFAULT: LIST VIEW
                 const snap = await getCol('contacts').limit(50).get();
                 let html = `<div class="list-container shadow-sm overflow-hidden">
                     <div class="p-4 border-b bg-slate-50 flex justify-between items-center">
                         <h3 class="text-[10px] font-black uppercase text-slate-400">All Students List</h3>
                     </div>
                     <div class="overflow-x-auto">
-                        <table><thead><tr><th>SR NO</th><th>Student Name</th><th>Father Name</th><th>Class / Section</th><th>Family</th></tr></thead><tbody>`;
+                        <table><thead><tr><th>SR NO</th><th>Name</th><th>Father</th><th>Class/Sec</th><th>Family Code</th></tr></thead><tbody>`;
                 
                 snap.forEach(doc => {
                     const d = doc.data();
                     html += `<tr class="hover:bg-slate-50 cursor-pointer" onclick="viewStudent('${doc.id}')">
                         <td class="text-emerald-600 font-black">${doc.id}</td>
-                        <td class="uppercase">${d['STUDENT NAME'] || d['Student Name'] || 'N/A'}</td>
+                        <td class="uppercase">${d['STUDENT NAME'] || 'N/A'}</td>
                         <td class="uppercase text-slate-500">${d['FATHER NAME'] || 'N/A'}</td>
-                        <td class="uppercase">${d['Class'] || d['CLASS'] || 'N/A'} - ${d['Section'] || d['SECTION'] || ''}</td>
+                        <td class="uppercase">${d['Class'] || 'N/A'} - ${d['Section'] || ''}</td>
                         <td class="text-blue-600 font-bold">${d['search_family'] || 'N/A'}</td>
                     </tr>`;
                 });
                 html += `</tbody></table></div></div>`;
                 resultsArea.innerHTML = html;
             } else {
-                // SEARCH: CARD VIEW + FAMILY TABLE
                 const docRef = await getCol('contacts').doc(term).get();
                 if (!docRef.exists) {
-                    resultsArea.innerHTML = `<div class="text-center py-20 text-red-400 font-black uppercase text-xs">SR No Not Found</div>`;
+                    resultsArea.innerHTML = `<div class="text-center py-20 text-red-400 font-black uppercase text-xs">Student ID Not Found</div>`;
                     return;
                 }
 
                 const student = docRef.data();
                 const familyCode = student['search_family'] || student['FMLY #'] || "";
-                
-                // Get logs for the searched student
                 const logsSnap = await getCol('logs').where('student_id', '==', docRef.id).get();
                 const logs = logsSnap.docs.map(d => d.data()).sort((a,b) => b.timestamp - a.timestamp);
 
-                // Get other family members
                 let others = [];
                 if (familyCode) {
                     const famSnap = await getCol('contacts').where('search_family', '==', familyCode.toString()).get();
@@ -187,11 +182,10 @@
                         if(d.id !== docRef.id) others.push({ id: d.id, ...d.data() });
                     });
                 }
-
                 resultsArea.innerHTML = renderDetailedCard(docRef.id, student, logs, others, familyCode);
             }
         } catch (e) {
-            resultsArea.innerHTML = `<div class="text-center py-20 text-red-500 font-black">Error: Check Connection</div>`;
+            resultsArea.innerHTML = `<div class="text-center py-20 text-red-500 font-black">Error occurred.</div>`;
         }
     }
 
@@ -207,7 +201,7 @@
         let logsHtml = logs.slice(0, 3).map(l => `
             <div class="history-item">
                 <p class="text-[7px] font-black text-emerald-600 uppercase">${l.date} ${l.time}</p>
-                <p class="text-[10px] font-bold text-slate-600 italic">"${l.remark}"</p>
+                <p class="text-[10px] font-bold text-slate-600">"${l.remark}"</p>
             </div>
         `).join('');
 
@@ -217,77 +211,59 @@
                 <td class="uppercase">${m['STUDENT NAME'] || 'N/A'}</td>
                 <td class="uppercase text-slate-500">${m['FATHER NAME'] || 'N/A'}</td>
                 <td class="uppercase text-xs">${m['Class'] || 'N/A'} - ${m['Section'] || ''}</td>
-                <td class="font-bold">${m['MOBILE'] || m['Mobile No'] || 'N/A'}</td>
+                <td class="font-bold">${m['MOBILE'] || 'N/A'}</td>
             </tr>
         `).join('');
 
         return `
             <div class="space-y-6">
-                <!-- Primary Student Detailed Card -->
                 <div class="info-card overflow-hidden">
                     <div class="bg-slate-900 p-6 flex justify-between items-center text-white">
                         <div>
-                            <p class="text-[9px] font-black opacity-50 uppercase tracking-widest">Main Selection</p>
+                            <p class="text-[9px] font-black opacity-50 uppercase tracking-widest">Student Profile</p>
                             <h2 class="text-xl font-black uppercase tracking-tight">${data['STUDENT NAME'] || 'N/A'}</h2>
                             <p class="text-xs font-bold text-emerald-400 mt-1 uppercase italic">${data['FATHER NAME'] || 'N/A'}</p>
                         </div>
                         <div class="text-right">
-                            <span class="bg-emerald-600 text-white text-xs font-black px-4 py-2 rounded-xl">SR NO: ${id}</span>
-                            <p class="text-[10px] font-black mt-2 opacity-60 uppercase">Family: ${fCode}</p>
+                            <span class="bg-emerald-600 text-white text-xs font-black px-4 py-2 rounded-xl">ID: ${id}</span>
+                            <p class="text-[10px] font-black mt-2 opacity-60 uppercase">Family Code: ${fCode}</p>
                         </div>
                     </div>
-
                     <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <!-- Details -->
                         <div class="space-y-4">
                             <div class="grid grid-cols-2 gap-4">
-                                <div><p class="detail-label">Class</p><p class="detail-value">${data['Class'] || data['CLASS'] || 'N/A'}</p></div>
-                                <div><p class="detail-label">Section</p><p class="detail-value">${data['Section'] || data['SECTION'] || 'N/A'}</p></div>
+                                <div><p class="detail-label">Class</p><p class="detail-value">${data['Class'] || 'N/A'}</p></div>
+                                <div><p class="detail-label">Section</p><p class="detail-value">${data['Section'] || 'N/A'}</p></div>
                                 <div><p class="detail-label">Mobile</p><p class="detail-value">${mob}</p></div>
                                 <div><p class="detail-label">WhatsApp</p><p class="detail-value">${wa}</p></div>
                             </div>
-                            
                             <div class="grid grid-cols-2 gap-2 pt-4">
-                                <a href="tel:${mob}" class="bg-emerald-600 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-emerald-100">Make Call</a>
-                                <a href="https://wa.me/${wa.toString().replace(/\D/g,'')}" target="_blank" class="bg-slate-800 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase">WhatsApp Message</a>
+                                <a href="tel:${mob}" class="bg-emerald-600 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-emerald-100">Call Now</a>
+                                <a href="https://wa.me/${wa.toString().replace(/\D/g,'')}" target="_blank" class="bg-slate-800 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase">WhatsApp</a>
                             </div>
                         </div>
-
-                        <!-- Remarks Section -->
                         <div class="bg-slate-50 p-5 rounded-[2rem] border border-slate-100">
-                            <p class="text-[9px] font-black text-slate-400 uppercase mb-3 tracking-widest">New Call Remark</p>
-                            <textarea id="rem-${id}" placeholder="What was the result of the call?" class="w-full bg-white border border-slate-200 rounded-2xl p-4 text-xs font-bold h-24 outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner"></textarea>
-                            <button onclick="saveRemark('${id}')" id="btn-${id}" class="w-full bg-blue-600 text-white py-4 mt-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-blue-100">Save Call Record</button>
+                            <p class="text-[9px] font-black text-slate-400 uppercase mb-3 tracking-widest">Call Remarks</p>
+                            <textarea id="rem-${id}" placeholder="Type call summary here..." class="w-full bg-white border border-slate-200 rounded-2xl p-4 text-xs font-bold h-24 outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                            <button onclick="saveRemark('${id}')" id="btn-${id}" class="w-full bg-blue-600 text-white py-4 mt-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-blue-100">Submit Record</button>
                         </div>
                     </div>
-
-                    <!-- History -->
                     <div class="px-6 pb-6 border-t pt-4">
                         <p class="text-[9px] font-black text-slate-400 uppercase mb-3">Call History</p>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                            ${logsHtml || '<p class="text-[10px] font-bold text-slate-300 italic">No previous logs found for this student.</p>'}
-                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">${logsHtml || '<p class="text-[10px] text-slate-400">No logs.</p>'}</div>
                     </div>
                 </div>
 
-                <!-- Family Members List Table -->
                 <div class="list-container shadow-md">
-                    <div class="bg-blue-50 p-4 border-b border-blue-100 flex justify-between items-center">
-                        <h3 class="text-[10px] font-black uppercase text-blue-800">Family Members (Group Code: ${fCode})</h3>
-                        <span class="text-[8px] font-black bg-blue-100 text-blue-600 px-2 py-1 rounded uppercase">List View</span>
+                    <div class="bg-blue-50 p-4 border-b border-blue-100">
+                        <h3 class="text-[10px] font-black uppercase text-blue-800">Other Siblings / Family Members</h3>
                     </div>
                     <div class="overflow-x-auto">
                         <table>
-                            <thead><tr><th>ID</th><th>Family Member Name</th><th>Father Name</th><th>Class & Section</th><th>Contact</th></tr></thead>
-                            <tbody>
-                                ${familyHtml || '<tr><td colspan="5" class="text-center py-6 text-slate-300 italic">No other family members found in records.</td></tr>'}
-                            </tbody>
+                            <thead><tr><th>ID</th><th>Name</th><th>Father</th><th>Class/Sec</th><th>Contact</th></tr></thead>
+                            <tbody>${familyHtml || '<tr><td colspan="5" class="text-center py-6 text-slate-300">No Siblings found.</td></tr>'}</tbody>
                         </table>
                     </div>
-                </div>
-
-                <div class="text-center">
-                    <button onclick="document.getElementById('search-input').value=''; performSearch();" class="text-[10px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest underline underline-offset-4">Back to main list</button>
                 </div>
             </div>
         `;
@@ -307,7 +283,7 @@
                 time: now.toLocaleTimeString(),
                 timestamp: now.getTime()
             });
-            btn.innerText = "Record Saved!";
+            btn.innerText = "Saved!";
             setTimeout(() => { performSearch(); updateCounts(); }, 800);
         } catch(e) { btn.innerText = "Error"; btn.disabled = false; }
     }
@@ -338,30 +314,70 @@
     async function downloadReport(format) {
         try {
             const [lSnap, cSnap] = await Promise.all([getCol('logs').get(), getCol('contacts').get()]);
+            
+            // Build Maps for easy lookup
             const sMap = new Map();
-            cSnap.forEach(d => sMap.set(d.id, d.data()));
+            const familyMap = new Map(); // familyCode -> Array of Student Names
+
+            cSnap.forEach(d => {
+                const data = d.data();
+                const id = d.id;
+                sMap.set(id, data);
+                
+                const fCode = data['search_family'] || data['FMLY #'] || "";
+                if (fCode) {
+                    if (!familyMap.has(fCode)) familyMap.set(fCode, []);
+                    familyMap.get(fCode).push({ id, name: data['STUDENT NAME'] || 'N/A' });
+                }
+            });
+
             const rows = lSnap.docs.map(doc => {
                 const l = doc.data();
                 const s = sMap.get(l.student_id) || {};
+                const fCode = s['search_family'] || s['FMLY #'] || "";
+                
+                // Find other family members' names
+                let familyNames = "N/A";
+                if (fCode && familyMap.has(fCode)) {
+                    familyNames = familyMap.get(fCode)
+                        .filter(member => member.id !== l.student_id) // Exclude current student
+                        .map(member => member.name)
+                        .join(", ");
+                }
+
                 return {
-                    "Date": l.date, "Time": l.time, "SR NO": l.student_id,
-                    "Name": s['STUDENT NAME'] || 'N/A', "Father": s['FATHER NAME'] || 'N/A',
-                    "Mobile": s['MOBILE'] || s['Mobile No'] || 'N/A', "Remarks": l.remark
+                    "Date": l.date, 
+                    "Time": l.time, 
+                    "SR NO": l.student_id,
+                    "Student Name": s['STUDENT NAME'] || 'N/A', 
+                    "Father Name": s['FATHER NAME'] || 'N/A',
+                    "Mobile": s['MOBILE'] || s['Mobile No'] || 'N/A',
+                    "Family Members": familyNames || "None", // NEW COLUMN
+                    "Remarks": l.remark
                 };
             }).sort((a,b) => b.timestamp - a.timestamp);
-            if (rows.length === 0) { alert("No logs recorded yet"); return; }
+
+            if (rows.length === 0) { alert("No logs available"); return; }
+
             if (format === 'excel') {
                 const ws = XLSX.utils.json_to_sheet(rows);
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Logs");
-                XLSX.writeFile(wb, "Call_Report.xlsx");
+                XLSX.utils.book_append_sheet(wb, ws, "Call Logs");
+                XLSX.writeFile(wb, "The_Educators_Call_Report.xlsx");
             } else {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF('l', 'pt', 'a4');
-                doc.autoTable({ head: [Object.keys(rows[0])], body: rows.map(r => Object.values(r)), styles: { fontSize: 8 } });
-                doc.save("Call_Report.pdf");
+                doc.text("Call Logs Detailed Report", 40, 30);
+                doc.autoTable({ 
+                    head: [Object.keys(rows[0])], 
+                    body: rows.map(r => Object.values(r)), 
+                    startY: 50,
+                    styles: { fontSize: 7, cellPadding: 2 },
+                    headStyles: { fillStyle: '#059669' }
+                });
+                doc.save("The_Educators_Call_Report.pdf");
             }
-        } catch(e) { alert("Error generating report"); }
+        } catch(e) { console.error(e); alert("Report generation error"); }
     }
 </script>
 </body>
