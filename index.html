@@ -67,14 +67,18 @@
         <div class="p-4 max-w-5xl mx-auto space-y-6">
             <!-- Stats -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between">
-                    <div>
-                        <p class="text-[9px] font-black text-slate-400 uppercase">Total Contacts</p>
-                        <p id="count-contacts" class="text-xl font-black text-blue-600">0</p>
+                <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm grid grid-cols-3 gap-2">
+                    <div class="text-center border-r">
+                        <p class="text-[8px] font-black text-slate-400 uppercase">Total Students</p>
+                        <p id="count-contacts" class="text-lg font-black text-blue-600">0</p>
                     </div>
-                    <div class="text-right">
-                        <p class="text-[9px] font-black text-slate-400 uppercase">Total Call Logs</p>
-                        <p id="count-logs" class="text-xl font-black text-emerald-600">0</p>
+                    <div class="text-center border-r">
+                        <p class="text-[8px] font-black text-slate-400 uppercase">Today's Calls</p>
+                        <p id="count-today" class="text-lg font-black text-emerald-600">0</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-[8px] font-black text-slate-400 uppercase">Yesterday</p>
+                        <p id="count-yesterday" class="text-lg font-black text-amber-600">0</p>
                     </div>
                 </div>
                 <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
@@ -197,9 +201,25 @@
 
     async function updateCounts() {
         try {
+            const today = new Date().toLocaleDateString();
+            const yest = new Date();
+            yest.setDate(yest.getDate() - 1);
+            const yesterdayStr = yest.toLocaleDateString();
+
             const [c, l] = await Promise.all([getCol('contacts').get(), getCol('logs').get()]);
+            
+            let todayCount = 0;
+            let yesterdayCount = 0;
+
+            l.forEach(doc => {
+                const log = doc.data();
+                if(log.date === today) todayCount++;
+                if(log.date === yesterdayStr) yesterdayCount++;
+            });
+
             document.getElementById('count-contacts').innerText = c.size;
-            document.getElementById('count-logs').innerText = l.size;
+            document.getElementById('count-today').innerText = todayCount;
+            document.getElementById('count-yesterday').innerText = yesterdayCount;
         } catch(e) {}
     }
 
@@ -238,13 +258,13 @@
                 }
 
                 const student = docRef.data();
-                const familyCode = student['search_family'] || student['FMLY #'] || "";
+                const familyCode = (student['search_family'] || student['FMLY #'] || "").toString();
                 const logsSnap = await getCol('logs').where('student_id', '==', docRef.id).get();
                 const logs = logsSnap.docs.map(d => d.data()).sort((a,b) => b.timestamp - a.timestamp);
 
                 let others = [];
                 if (familyCode) {
-                    const famSnap = await getCol('contacts').where('search_family', '==', familyCode.toString()).get();
+                    const famSnap = await getCol('contacts').where('search_family', '==', familyCode).get();
                     famSnap.forEach(d => {
                         if(d.id !== docRef.id) others.push({ id: d.id, ...d.data() });
                     });
@@ -281,7 +301,7 @@
     function openEditModal(id, currentData) {
         isEditMode = true;
         document.getElementById('modal-title').innerText = "Edit Student Profile";
-        document.getElementById('sr-field-container').classList.add('hidden'); // Cannot edit SR No once set
+        document.getElementById('sr-field-container').classList.add('hidden');
         document.getElementById('edit-id').value = id;
         document.getElementById('edit-name').value = currentData['STUDENT NAME'] || '';
         document.getElementById('edit-father').value = currentData['FATHER NAME'] || '';
@@ -318,7 +338,6 @@
             btn.innerText = "Processing..."; btn.disabled = true;
 
             if (!isEditMode) {
-                // Duplicate check
                 const check = await getCol('contacts').doc(studentId).get();
                 if (check.exists) {
                     document.getElementById('dup-warning').classList.remove('hidden');
@@ -452,8 +471,6 @@
                 const batch = db.batch();
                 const chunk = data.slice(i, i+50);
                 
-                // Firestore doesn't support easy "if not exists" in batch, so we check first or just set without merge
-                // Here we use a smarter approach: we loop and check docs.
                 for(const item of chunk) {
                     const id = (item['ID No.'] || item['SR. NO.'] || item['Student ID'] || item['ID NO'] || '').toString().trim();
                     const fCode = (item['Fmly Code'] || item['FMLY #'] || item['Family Code'] || '').toString().trim();
@@ -471,7 +488,7 @@
                 }
                 await batch.commit();
             }
-            showToast(`Import: ${added} added, ${skipped} skipped (duplicates)`, "bg-emerald-600"); 
+            showToast(`Import: ${added} added, ${skipped} skipped`, "bg-emerald-600"); 
             updateCounts(); performSearch();
         };
         reader.readAsBinaryString(file);
@@ -495,17 +512,42 @@
 
     async function downloadReport(format) {
         try {
+            showToast("Generating report with family data...", "bg-blue-500");
             const [lSnap, cSnap] = await Promise.all([getCol('logs').get(), getCol('contacts').get()]);
+            
             const sMap = new Map();
-            cSnap.forEach(d => sMap.set(d.id, d.data()));
+            const famGroups = new Map(); // Group students by family code
+
+            cSnap.forEach(d => {
+                const data = d.data();
+                const id = d.id;
+                const fCode = (data['search_family'] || data['FMLY #'] || data['Family Code'] || "").toString();
+                
+                sMap.set(id, { ...data, id });
+
+                if (fCode) {
+                    if (!famGroups.has(fCode)) famGroups.set(fCode, []);
+                    famGroups.get(fCode).push(data['STUDENT NAME'] || 'N/A');
+                }
+            });
 
             const rows = lSnap.docs.map(doc => {
                 const l = doc.data();
                 const s = sMap.get(l.student_id) || {};
+                const fCode = (s['search_family'] || s['FMLY #'] || s['Family Code'] || "").toString();
+                
+                // Get all sibling names for this family
+                const familyNames = fCode && famGroups.has(fCode) ? famGroups.get(fCode).join(', ') : 'N/A';
+
                 return {
-                    "Date": l.date, "Time": l.time, "SR NO": l.student_id,
-                    "Student Name": s['STUDENT NAME'] || 'N/A', "Father Name": s['FATHER NAME'] || 'N/A',
-                    "Mobile": s['MOBILE'] || s['Mobile No'] || 'N/A', "Remarks": l.remark
+                    "Date": l.date, 
+                    "Time": l.time, 
+                    "SR NO": l.student_id,
+                    "Student Name": s['STUDENT NAME'] || 'N/A', 
+                    "Father Name": s['FATHER NAME'] || 'N/A',
+                    "Mobile": s['MOBILE'] || s['Mobile No'] || 'N/A', 
+                    "Family Members": familyNames,
+                    "Remarks": l.remark
                 };
             }).sort((a,b) => b.timestamp - a.timestamp);
 
@@ -514,22 +556,26 @@
             if (format === 'excel') {
                 const ws = XLSX.utils.json_to_sheet(rows);
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Call Logs");
-                XLSX.writeFile(wb, "The_Educators_Call_Report.xlsx");
+                XLSX.utils.book_append_sheet(wb, ws, "Call Logs Detailed");
+                XLSX.writeFile(wb, "The_Educators_Family_Call_Report.xlsx");
             } else {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF('l', 'pt', 'a4');
-                doc.text("Call Logs Detailed Report", 40, 30);
+                doc.setFontSize(14);
+                doc.text("Call Logs Detailed Report (Family Context)", 40, 30);
                 doc.autoTable({ 
                     head: [Object.keys(rows[0])], 
                     body: rows.map(r => Object.values(r)), 
                     startY: 50,
-                    styles: { fontSize: 7, cellPadding: 2 },
-                    headStyles: { fillColor: [5, 150, 105] }
+                    styles: { fontSize: 6, cellPadding: 2, overflow: 'linebreak' },
+                    columnStyles: {
+                        6: { cellWidth: 150 } // Give more width to Family Members column
+                    },
+                    headStyles: { fillColor: [15, 23, 42] }
                 });
-                doc.save("The_Educators_Call_Report.pdf");
+                doc.save("The_Educators_Family_Call_Report.pdf");
             }
-        } catch(e) { alert("Report error"); }
+        } catch(e) { console.error(e); alert("Report generation error"); }
     }
 </script>
 </body>
