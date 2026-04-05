@@ -23,11 +23,14 @@
         .detail-label { font-size: 9px; color: #94a3b8; font-weight: 900; text-transform: uppercase; }
         .detail-value { font-size: 13px; color: #1e293b; font-weight: 700; text-transform: uppercase; }
         .modal { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 24px; border-radius: 12px; font-weight: bold; color: white; z-index: 1000; display: none; }
     </style>
 </head>
 <body>
 
 <div id="app" class="min-h-screen pb-10">
+    <div id="toast-msg" class="toast"></div>
+
     <!-- Login Screen -->
     <div id="login-screen" class="flex items-center justify-center min-h-screen p-6 bg-slate-900">
         <div class="bg-white p-8 rounded-[2rem] w-full max-w-sm shadow-2xl">
@@ -52,10 +55,11 @@
                     <span class="text-[8px] font-bold text-emerald-600 uppercase tracking-widest">Portal System</span>
                 </div>
             </div>
-            <div class="flex gap-1">
-                <button onclick="downloadBackup()" class="text-[8px] font-black text-amber-700 bg-amber-50 px-3 py-2 rounded-full uppercase border border-amber-100">Backup Data</button>
-                <button onclick="downloadReport('excel')" class="text-[8px] font-black text-emerald-700 bg-emerald-50 px-3 py-2 rounded-full uppercase border border-emerald-100">Excel Report</button>
-                <button onclick="downloadReport('pdf')" class="text-[8px] font-black text-blue-700 bg-blue-50 px-3 py-2 rounded-full uppercase border border-blue-100">PDF Report</button>
+            <div class="flex gap-1 flex-wrap justify-end">
+                <button onclick="openAddModal()" class="text-[8px] font-black text-white bg-emerald-600 px-3 py-2 rounded-full uppercase shadow-md">+ Add Student</button>
+                <button onclick="downloadBackup()" class="text-[8px] font-black text-amber-700 bg-amber-50 px-3 py-2 rounded-full uppercase border border-amber-100">Backup</button>
+                <button onclick="downloadReport('excel')" class="text-[8px] font-black text-emerald-700 bg-emerald-50 px-3 py-2 rounded-full uppercase border border-emerald-100">Excel</button>
+                <button onclick="downloadReport('pdf')" class="text-[8px] font-black text-blue-700 bg-blue-50 px-3 py-2 rounded-full uppercase border border-blue-100">PDF</button>
                 <button onclick="handleLogout()" class="text-[8px] font-black text-red-500 bg-red-50 px-3 py-2 rounded-full uppercase border border-red-100">Logout</button>
             </div>
         </header>
@@ -90,44 +94,53 @@
         </div>
     </div>
 
-    <!-- Edit Modal -->
-    <div id="edit-modal" class="hidden fixed inset-0 z-[100] modal flex items-center justify-center p-6">
+    <!-- Add/Edit Modal -->
+    <div id="student-modal" class="hidden fixed inset-0 z-[100] modal flex items-center justify-center p-6">
         <div class="bg-white rounded-[2rem] w-full max-w-md p-8 shadow-2xl relative overflow-y-auto max-h-[90vh]">
-            <h3 class="text-lg font-black uppercase mb-6 text-slate-800 italic">Edit Student Info</h3>
+            <h3 id="modal-title" class="text-lg font-black uppercase mb-6 text-slate-800 italic">Add New Student</h3>
             <input type="hidden" id="edit-id">
             <div class="space-y-4">
+                <div id="sr-field-container">
+                    <label class="text-[9px] font-black text-slate-400 uppercase ml-2">SR No (ID)</label>
+                    <input type="text" id="edit-sr" class="w-full p-4 bg-slate-50 border rounded-xl font-bold uppercase text-xs outline-none focus:ring-2 focus:ring-blue-400">
+                    <p id="dup-warning" class="hidden text-[8px] text-red-500 font-bold mt-1 uppercase ml-2">This SR No already exists!</p>
+                </div>
                 <div>
                     <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Student Name</label>
-                    <input type="text" id="edit-name" class="w-full p-4 bg-slate-50 border rounded-xl font-bold uppercase text-xs outline-none">
+                    <input type="text" id="edit-name" class="w-full p-4 bg-slate-50 border rounded-xl font-bold uppercase text-xs outline-none focus:ring-2 focus:ring-blue-400">
                 </div>
                 <div>
                     <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Father Name</label>
-                    <input type="text" id="edit-father" class="w-full p-4 bg-slate-50 border rounded-xl font-bold uppercase text-xs outline-none">
+                    <input type="text" id="edit-father" class="w-full p-4 bg-slate-50 border rounded-xl font-bold uppercase text-xs outline-none focus:ring-2 focus:ring-blue-400">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Class</label>
-                        <input type="text" id="edit-class" class="w-full p-4 bg-slate-50 border rounded-xl font-bold uppercase text-xs outline-none">
+                        <input type="text" id="edit-class" class="w-full p-4 bg-slate-50 border rounded-xl font-bold uppercase text-xs outline-none focus:ring-2 focus:ring-blue-400">
                     </div>
                     <div>
                         <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Section</label>
-                        <input type="text" id="edit-section" class="w-full p-4 bg-slate-50 border rounded-xl font-bold uppercase text-xs outline-none">
+                        <input type="text" id="edit-section" class="w-full p-4 bg-slate-50 border rounded-xl font-bold uppercase text-xs outline-none focus:ring-2 focus:ring-blue-400">
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Mobile Number</label>
-                        <input type="text" id="edit-mobile" class="w-full p-4 bg-slate-50 border rounded-xl font-bold uppercase text-xs outline-none">
+                        <input type="text" id="edit-mobile" class="w-full p-4 bg-slate-50 border rounded-xl font-bold uppercase text-xs outline-none focus:ring-2 focus:ring-blue-400">
                     </div>
                     <div>
                         <label class="text-[9px] font-black text-slate-400 uppercase ml-2">WhatsApp Number</label>
-                        <input type="text" id="edit-whatsapp" class="w-full p-4 bg-slate-50 border rounded-xl font-bold uppercase text-xs outline-none">
+                        <input type="text" id="edit-whatsapp" class="w-full p-4 bg-slate-50 border rounded-xl font-bold uppercase text-xs outline-none focus:ring-2 focus:ring-blue-400">
                     </div>
+                </div>
+                <div>
+                    <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Family Code (Optional)</label>
+                    <input type="text" id="edit-fml" class="w-full p-4 bg-slate-50 border rounded-xl font-bold uppercase text-xs outline-none focus:ring-2 focus:ring-blue-400">
                 </div>
             </div>
             <div class="flex gap-2 mt-8">
-                <button onclick="closeEditModal()" class="flex-1 bg-slate-100 text-slate-600 p-4 rounded-xl font-black uppercase text-[10px]">Cancel</button>
-                <button onclick="saveEdit()" class="flex-1 bg-emerald-600 text-white p-4 rounded-xl font-black uppercase text-[10px]">Update Info</button>
+                <button onclick="closeModal()" class="flex-1 bg-slate-100 text-slate-600 p-4 rounded-xl font-black uppercase text-[10px]">Cancel</button>
+                <button id="save-btn" onclick="saveStudent()" class="flex-1 bg-emerald-600 text-white p-4 rounded-xl font-black uppercase text-[10px]">Save Details</button>
             </div>
         </div>
     </div>
@@ -150,6 +163,8 @@
 
     const getCol = (name) => db.collection('artifacts').doc(appId).collection('public').doc('data').collection(name);
 
+    let isEditMode = false;
+
     auth.onAuthStateChanged(user => {
         if (user) {
             document.getElementById('login-screen').classList.add('hidden');
@@ -162,12 +177,20 @@
         }
     });
 
+    function showToast(msg, color = 'bg-slate-800') {
+        const t = document.getElementById('toast-msg');
+        t.innerText = msg;
+        t.className = `toast ${color}`;
+        t.style.display = 'block';
+        setTimeout(() => { t.style.display = 'none'; }, 3000);
+    }
+
     async function handleLogin() {
         const u = document.getElementById('username').value.trim();
         const p = document.getElementById('password').value;
         if(!u || !p) return;
         const email = u.includes('@') ? u : `${u}@school.com`;
-        try { await auth.signInWithEmailAndPassword(email, p); } catch(e) { alert("Login Fail"); }
+        try { await auth.signInWithEmailAndPassword(email, p); } catch(e) { showToast("Login Failed", "bg-red-500"); }
     }
 
     function handleLogout() { auth.signOut(); }
@@ -183,14 +206,14 @@
     async function performSearch() {
         const term = document.getElementById('search-input').value.trim();
         const resultsArea = document.getElementById('results-area');
-        resultsArea.innerHTML = `<div class="text-center py-20 font-black text-slate-300 animate-pulse text-xs uppercase tracking-widest">Searching...</div>`;
+        resultsArea.innerHTML = `<div class="text-center py-20 font-black text-slate-300 animate-pulse text-xs uppercase tracking-widest">Searching Database...</div>`;
 
         try {
             if (!term) {
-                const snap = await getCol('contacts').limit(50).get();
+                const snap = await getCol('contacts').limit(30).get();
                 let html = `<div class="list-container shadow-sm overflow-hidden">
                     <div class="p-4 border-b bg-slate-50 flex justify-between items-center">
-                        <h3 class="text-[10px] font-black uppercase text-slate-400">All Students List</h3>
+                        <h3 class="text-[10px] font-black uppercase text-slate-400">Recent Students</h3>
                     </div>
                     <div class="overflow-x-auto">
                         <table><thead><tr><th>SR NO</th><th>Name</th><th>Father</th><th>Class/Sec</th><th>Family Code</th></tr></thead><tbody>`;
@@ -210,7 +233,7 @@
             } else {
                 const docRef = await getCol('contacts').doc(term).get();
                 if (!docRef.exists) {
-                    resultsArea.innerHTML = `<div class="text-center py-20 text-red-400 font-black uppercase text-xs">Student ID Not Found</div>`;
+                    resultsArea.innerHTML = `<div class="text-center py-20 text-red-400 font-black uppercase text-xs">SR No "${term}" Not Found</div>`;
                     return;
                 }
 
@@ -238,7 +261,27 @@
         performSearch();
     }
 
+    function openAddModal() {
+        isEditMode = false;
+        document.getElementById('modal-title').innerText = "Add New Student";
+        document.getElementById('sr-field-container').classList.remove('hidden');
+        document.getElementById('edit-id').value = '';
+        document.getElementById('edit-sr').value = '';
+        document.getElementById('edit-name').value = '';
+        document.getElementById('edit-father').value = '';
+        document.getElementById('edit-class').value = '';
+        document.getElementById('edit-section').value = '';
+        document.getElementById('edit-mobile').value = '';
+        document.getElementById('edit-whatsapp').value = '';
+        document.getElementById('edit-fml').value = '';
+        document.getElementById('dup-warning').classList.add('hidden');
+        document.getElementById('student-modal').classList.remove('hidden');
+    }
+
     function openEditModal(id, currentData) {
+        isEditMode = true;
+        document.getElementById('modal-title').innerText = "Edit Student Profile";
+        document.getElementById('sr-field-container').classList.add('hidden'); // Cannot edit SR No once set
         document.getElementById('edit-id').value = id;
         document.getElementById('edit-name').value = currentData['STUDENT NAME'] || '';
         document.getElementById('edit-father').value = currentData['FATHER NAME'] || '';
@@ -246,30 +289,55 @@
         document.getElementById('edit-section').value = currentData['Section'] || '';
         document.getElementById('edit-mobile').value = currentData['MOBILE'] || currentData['Mobile No'] || '';
         document.getElementById('edit-whatsapp').value = currentData['WHATSAPP'] || '';
-        document.getElementById('edit-modal').classList.remove('hidden');
+        document.getElementById('edit-fml').value = currentData['search_family'] || '';
+        document.getElementById('student-modal').classList.remove('hidden');
     }
 
-    function closeEditModal() {
-        document.getElementById('edit-modal').classList.add('hidden');
+    function closeModal() {
+        document.getElementById('student-modal').classList.add('hidden');
     }
 
-    async function saveEdit() {
-        const id = document.getElementById('edit-id').value;
-        const updated = {
+    async function saveStudent() {
+        const srNo = document.getElementById('edit-sr').value.trim();
+        const studentId = isEditMode ? document.getElementById('edit-id').value : srNo;
+
+        if (!studentId) { showToast("SR No is required", "bg-amber-600"); return; }
+
+        const payload = {
             'STUDENT NAME': document.getElementById('edit-name').value.trim(),
             'FATHER NAME': document.getElementById('edit-father').value.trim(),
             'Class': document.getElementById('edit-class').value.trim(),
             'Section': document.getElementById('edit-section').value.trim(),
             'MOBILE': document.getElementById('edit-mobile').value.trim(),
             'WHATSAPP': document.getElementById('edit-whatsapp').value.trim(),
+            'search_family': document.getElementById('edit-fml').value.trim(),
         };
 
         try {
-            await getCol('contacts').doc(id).update(updated);
-            closeEditModal();
+            const btn = document.getElementById('save-btn');
+            btn.innerText = "Processing..."; btn.disabled = true;
+
+            if (!isEditMode) {
+                // Duplicate check
+                const check = await getCol('contacts').doc(studentId).get();
+                if (check.exists) {
+                    document.getElementById('dup-warning').classList.remove('hidden');
+                    btn.innerText = "Save Details"; btn.disabled = false;
+                    return;
+                }
+                await getCol('contacts').doc(studentId).set(payload);
+                showToast("Student Added Successfully", "bg-emerald-600");
+            } else {
+                await getCol('contacts').doc(studentId).update(payload);
+                showToast("Profile Updated", "bg-blue-600");
+            }
+
+            closeModal();
             performSearch();
+            updateCounts();
+            btn.innerText = "Save Details"; btn.disabled = false;
         } catch(e) {
-            alert("Update Failed!");
+            showToast("Error Saving Data", "bg-red-500");
         }
     }
 
@@ -375,16 +443,36 @@
             const wb = XLSX.read(evt.target.result, { type: 'binary' });
             const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
             const col = getCol(colName);
-            for(let i=0; i<data.length; i+=100) {
+            let added = 0;
+            let skipped = 0;
+
+            showToast("Checking for duplicates...", "bg-blue-500");
+
+            for(let i=0; i<data.length; i+=50) {
                 const batch = db.batch();
-                data.slice(i, i+100).forEach(item => {
+                const chunk = data.slice(i, i+50);
+                
+                // Firestore doesn't support easy "if not exists" in batch, so we check first or just set without merge
+                // Here we use a smarter approach: we loop and check docs.
+                for(const item of chunk) {
                     const id = (item['ID No.'] || item['SR. NO.'] || item['Student ID'] || item['ID NO'] || '').toString().trim();
                     const fCode = (item['Fmly Code'] || item['FMLY #'] || item['Family Code'] || '').toString().trim();
-                    if(id) batch.set(col.doc(id), { ...item, search_family: fCode }, { merge: true });
-                });
+                    
+                    if(id) {
+                        const docRef = col.doc(id);
+                        const existing = await docRef.get();
+                        if(!existing.exists) {
+                            batch.set(docRef, { ...item, search_family: fCode });
+                            added++;
+                        } else {
+                            skipped++;
+                        }
+                    }
+                }
                 await batch.commit();
             }
-            alert("Database Updated!"); updateCounts(); performSearch();
+            showToast(`Import: ${added} added, ${skipped} skipped (duplicates)`, "bg-emerald-600"); 
+            updateCounts(); performSearch();
         };
         reader.readAsBinaryString(file);
     }
@@ -401,7 +489,7 @@
             const ws2 = XLSX.utils.json_to_sheet(logs);
             XLSX.utils.book_append_sheet(wb, ws1, "All Students");
             XLSX.utils.book_append_sheet(wb, ws2, "All Call Logs");
-            XLSX.writeFile(wb, `The_Educators_Full_Backup_${new Date().toISOString().slice(0,10)}.xlsx`);
+            XLSX.writeFile(wb, `Educators_Backup_${new Date().toISOString().slice(0,10)}.xlsx`);
         } catch(e) { alert("Backup error"); }
     }
 
@@ -409,36 +497,19 @@
         try {
             const [lSnap, cSnap] = await Promise.all([getCol('logs').get(), getCol('contacts').get()]);
             const sMap = new Map();
-            const familyMap = new Map();
-
-            cSnap.forEach(d => {
-                const data = d.data();
-                const id = d.id;
-                sMap.set(id, data);
-                const fCode = data['search_family'] || data['FMLY #'] || "";
-                if (fCode) {
-                    if (!familyMap.has(fCode)) familyMap.set(fCode, []);
-                    familyMap.get(fCode).push({ id, name: data['STUDENT NAME'] || 'N/A' });
-                }
-            });
+            cSnap.forEach(d => sMap.set(d.id, d.data()));
 
             const rows = lSnap.docs.map(doc => {
                 const l = doc.data();
                 const s = sMap.get(l.student_id) || {};
-                const fCode = s['search_family'] || s['FMLY #'] || "";
-                let familyNames = "N/A";
-                if (fCode && familyMap.has(fCode)) {
-                    familyNames = familyMap.get(fCode).filter(m => m.id !== l.student_id).map(m => m.name).join(", ");
-                }
                 return {
                     "Date": l.date, "Time": l.time, "SR NO": l.student_id,
                     "Student Name": s['STUDENT NAME'] || 'N/A', "Father Name": s['FATHER NAME'] || 'N/A',
-                    "Mobile": s['MOBILE'] || s['Mobile No'] || 'N/A', "Family Members": familyNames || "None",
-                    "Remarks": l.remark
+                    "Mobile": s['MOBILE'] || s['Mobile No'] || 'N/A', "Remarks": l.remark
                 };
             }).sort((a,b) => b.timestamp - a.timestamp);
 
-            if (rows.length === 0) { alert("No logs available"); return; }
+            if (rows.length === 0) { showToast("No logs found", "bg-amber-600"); return; }
 
             if (format === 'excel') {
                 const ws = XLSX.utils.json_to_sheet(rows);
