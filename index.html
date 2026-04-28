@@ -1,151 +1,111 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Educators</title>
+  <title>Simple Educators System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-<style>
-body { font-family: sans-serif; background:#f1f5f9; }
-.toast { position:fixed; bottom:20px; right:20px; padding:10px; color:white; border-radius:10px; display:none; }
-</style>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 
-<body>
-
-<div id="toast-msg" class="toast"></div>
+<body class="bg-slate-100">
 
 <!-- LOGIN -->
-<div id="login-screen" class="flex items-center justify-center h-screen bg-slate-900">
-<div class="bg-white p-6 rounded-xl w-80">
-<h2 class="text-xl font-bold mb-4 text-center">Admin Login</h2>
+<div id="login" class="flex items-center justify-center h-screen">
+  <div class="bg-white p-6 rounded-xl w-80 shadow">
+    <h2 class="text-xl font-bold mb-4">Login</h2>
 
-<input id="username" placeholder="Username" class="w-full p-2 border mb-2">
-<input id="password" placeholder="Password" type="password" class="w-full p-2 border mb-3">
+    <input id="email" placeholder="Email"
+      class="w-full p-3 mb-3 border rounded normal-case">
 
-<button onclick="handleLogin()" class="w-full bg-green-600 text-white p-2 rounded">Login</button>
-</div>
+    <input id="pass" type="password" placeholder="Password"
+      class="w-full p-3 mb-3 border rounded">
+
+    <button onclick="login()"
+      class="w-full bg-green-600 text-white p-3 rounded">
+      Login
+    </button>
+  </div>
 </div>
 
 <!-- DASHBOARD -->
-<div id="dashboard" class="hidden p-5">
-<div class="flex justify-between mb-4">
-<h1 class="text-xl font-bold">Dashboard</h1>
-<button onclick="handleLogout()" class="bg-red-500 text-white px-4 py-2 rounded">Logout</button>
-</div>
+<div id="dash" class="hidden p-6">
 
-<div class="mb-4">
-<input id="search-input" placeholder="Enter SR No" class="border p-2">
-<button onclick="performSearch()" class="bg-black text-white px-3 py-2">Search</button>
-</div>
+  <div class="flex justify-between mb-4">
+    <h1 class="text-xl font-bold">Dashboard</h1>
+    <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded">Logout</button>
+  </div>
 
-<div id="results-area"></div>
+  <!-- ADD -->
+  <div class="bg-white p-4 rounded shadow mb-4">
+    <input id="id" placeholder="SR No" class="border p-2 mr-2">
+    <input id="name" placeholder="Name" class="border p-2 mr-2">
+    <button onclick="add()" class="bg-blue-500 text-white px-3 py-2 rounded">Add</button>
+  </div>
+
+  <!-- LIST -->
+  <div id="list" class="bg-white p-4 rounded shadow"></div>
+
 </div>
 
 <script>
-// 🔥 FIREBASE (ONLY DATABASE)
 const firebaseConfig = {
-apiKey: "AIzaSyBwkBy_EzDFx6Xd_U7pE6Ud-jC9uL3tKiE",
-authDomain: "theeducator-37df7.firebaseapp.com",
-projectId: "theeducator-37df7"
+  apiKey: "AIzaSyBwkBy_EzDFx6Xd_U7pE6Ud-jC9uL3tKiE",
+  authDomain: "theeducator-37df7.firebaseapp.com",
+  projectId: "theeducator-37df7"
 };
 
 firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 const db = firebase.firestore();
 
-const getCol = (name) => db.collection('artifacts')
-.doc('theeducator-37df7')
-.collection('public')
-.doc('data')
-.collection(name);
+auth.onAuthStateChanged(user=>{
+  if(user){
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("dash").classList.remove("hidden");
+    load();
+  } else {
+    document.getElementById("login").classList.remove("hidden");
+    document.getElementById("dash").classList.add("hidden");
+  }
+});
 
-// 🔥 USERS
-const users = [
-{ username: "rabia@123.com", password: "123" },
-{ username: "admin@123.com", password: "123" }
-];
-
-// 🔥 AUTO LOGIN
-window.onload = () => {
-if(localStorage.getItem("isLoggedIn")==="true"){
-showDashboard();
-}
-};
-
-function showDashboard(){
-document.getElementById('login-screen').classList.add('hidden');
-document.getElementById('dashboard').classList.remove('hidden');
+function login(){
+  const e = document.getElementById("email").value;
+  const p = document.getElementById("pass").value;
+  auth.signInWithEmailAndPassword(e,p)
+    .catch(()=>alert("Login Failed"));
 }
 
-// 🔥 LOGIN FIXED
-function handleLogin(){
-const u = document.getElementById('username').value.trim().toLowerCase();
-const p = document.getElementById('password').value.trim();
-
-const found = users.find(x => 
-x.username.toLowerCase() === u && x.password === p
-);
-
-if(found){
-localStorage.setItem("isLoggedIn","true");
-showDashboard();
-showToast("Login Success","green");
-}else{
-showToast("Invalid Login","red");
-}
+function logout(){
+  auth.signOut();
 }
 
-// 🔥 LOGOUT
-function handleLogout(){
-localStorage.removeItem("isLoggedIn");
-location.reload();
+async function add(){
+  const id = document.getElementById("id").value;
+  const name = document.getElementById("name").value;
+
+  if(!id) return;
+
+  await db.collection("contacts").doc(id).set({
+    name: name
+  });
+
+  load();
 }
 
-// 🔥 TOAST
-function showToast(msg,color="black"){
-const t=document.getElementById('toast-msg');
-t.innerText=msg;
-t.style.background=color;
-t.style.display="block";
-setTimeout(()=>t.style.display="none",2000);
-}
+async function load(){
+  const snap = await db.collection("contacts").get();
+  let html = "";
 
-// 🔥 SEARCH
-async function performSearch(){
-const term=document.getElementById('search-input').value.trim();
-const area=document.getElementById('results-area');
+  snap.forEach(doc=>{
+    html += `<div class="border p-2 mb-2">
+      <b>${doc.id}</b> - ${doc.data().name || ''}
+    </div>`;
+  });
 
-if(!term){
-area.innerHTML="<p>Enter SR No</p>";
-return;
-}
-
-area.innerHTML="Loading...";
-
-try{
-const doc=await getCol('contacts').doc(term).get();
-
-if(!doc.exists){
-area.innerHTML="<p style='color:red'>Not Found</p>";
-return;
-}
-
-const d=doc.data();
-
-area.innerHTML=`
-<div style="background:white;padding:20px;border-radius:10px">
-<h2><b>${d['STUDENT NAME']||'N/A'}</b></h2>
-<p>Father: ${d['FATHER NAME']||''}</p>
-<p>Class: ${d['Class']||''}</p>
-</div>
-`;
-}catch(e){
-area.innerHTML="Error";
-}
+  document.getElementById("list").innerHTML = html;
 }
 </script>
 
