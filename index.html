@@ -22,10 +22,10 @@ body { font-family: sans-serif; background:#f1f5f9; }
 <!-- LOGIN -->
 <div id="login-screen" class="flex items-center justify-center h-screen bg-slate-900">
 <div class="bg-white p-6 rounded-xl w-80">
-<h2 class="text-xl font-bold mb-4 text-center">Login</h2>
+<h2 class="text-xl font-bold mb-4 text-center">Admin Login</h2>
 
-<input id="username" value="rabia@123.com" class="w-full p-2 border mb-2">
-<input id="password" value="123" type="password" class="w-full p-2 border mb-3">
+<input id="username" placeholder="Username" class="w-full p-2 border mb-2">
+<input id="password" placeholder="Password" type="password" class="w-full p-2 border mb-3">
 
 <button onclick="handleLogin()" class="w-full bg-green-600 text-white p-2 rounded">Login</button>
 </div>
@@ -33,19 +33,21 @@ body { font-family: sans-serif; background:#f1f5f9; }
 
 <!-- DASHBOARD -->
 <div id="dashboard" class="hidden p-5">
-<h1 class="text-2xl font-bold mb-4">Dashboard</h1>
-
+<div class="flex justify-between mb-4">
+<h1 class="text-xl font-bold">Dashboard</h1>
 <button onclick="handleLogout()" class="bg-red-500 text-white px-4 py-2 rounded">Logout</button>
+</div>
 
-<div class="mt-5">
+<div class="mb-4">
 <input id="search-input" placeholder="Enter SR No" class="border p-2">
 <button onclick="performSearch()" class="bg-black text-white px-3 py-2">Search</button>
 </div>
 
-<div id="results-area" class="mt-5"></div>
+<div id="results-area"></div>
 </div>
 
 <script>
+// 🔥 FIREBASE (ONLY DATABASE)
 const firebaseConfig = {
 apiKey: "AIzaSyBwkBy_EzDFx6Xd_U7pE6Ud-jC9uL3tKiE",
 authDomain: "theeducator-37df7.firebaseapp.com",
@@ -61,11 +63,13 @@ const getCol = (name) => db.collection('artifacts')
 .doc('data')
 .collection(name);
 
+// 🔥 USERS
 const users = [
 { username: "rabia@123.com", password: "123" },
 { username: "admin@123.com", password: "123" }
 ];
 
+// 🔥 AUTO LOGIN
 window.onload = () => {
 if(localStorage.getItem("isLoggedIn")==="true"){
 showDashboard();
@@ -75,28 +79,33 @@ showDashboard();
 function showDashboard(){
 document.getElementById('login-screen').classList.add('hidden');
 document.getElementById('dashboard').classList.remove('hidden');
-performSearch();
 }
 
+// 🔥 LOGIN FIXED
 function handleLogin(){
-const u=document.getElementById('username').value.trim();
-const p=document.getElementById('password').value;
+const u = document.getElementById('username').value.trim().toLowerCase();
+const p = document.getElementById('password').value.trim();
 
-const found=users.find(x=>x.username===u && x.password===p);
+const found = users.find(x => 
+x.username.toLowerCase() === u && x.password === p
+);
 
 if(found){
 localStorage.setItem("isLoggedIn","true");
 showDashboard();
+showToast("Login Success","green");
 }else{
 showToast("Invalid Login","red");
 }
 }
 
+// 🔥 LOGOUT
 function handleLogout(){
 localStorage.removeItem("isLoggedIn");
 location.reload();
 }
 
+// 🔥 TOAST
 function showToast(msg,color="black"){
 const t=document.getElementById('toast-msg');
 t.innerText=msg;
@@ -105,21 +114,23 @@ t.style.display="block";
 setTimeout(()=>t.style.display="none",2000);
 }
 
+// 🔥 SEARCH
 async function performSearch(){
 const term=document.getElementById('search-input').value.trim();
 const area=document.getElementById('results-area');
 
 if(!term){
-area.innerHTML="Enter SR No";
+area.innerHTML="<p>Enter SR No</p>";
 return;
 }
 
 area.innerHTML="Loading...";
 
+try{
 const doc=await getCol('contacts').doc(term).get();
 
 if(!doc.exists){
-area.innerHTML="Not Found";
+area.innerHTML="<p style='color:red'>Not Found</p>";
 return;
 }
 
@@ -127,11 +138,14 @@ const d=doc.data();
 
 area.innerHTML=`
 <div style="background:white;padding:20px;border-radius:10px">
-<h2>${d['STUDENT NAME']||'N/A'}</h2>
-<p>${d['FATHER NAME']||''}</p>
-<p>${d['Class']||''}</p>
+<h2><b>${d['STUDENT NAME']||'N/A'}</b></h2>
+<p>Father: ${d['FATHER NAME']||''}</p>
+<p>Class: ${d['Class']||''}</p>
 </div>
 `;
+}catch(e){
+area.innerHTML="Error";
+}
 }
 </script>
 
