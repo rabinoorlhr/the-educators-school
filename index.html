@@ -12,47 +12,57 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 24px; border-radius: 12px; font-weight: bold; color: white; z-index: 1000; display: none; }
-        .login-card { background: white; border-radius: 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+        .info-card { background: white; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
-<div id="app" class="min-h-screen">
-    <div id="toast-msg" class="toast"></div>
+<div id="app" class="min-h-screen pb-10">
+    <div id="toast-msg" class="toast shadow-lg"></div>
 
     <div id="login-screen" class="flex items-center justify-center min-h-screen p-6 bg-slate-900">
-        <div class="login-card p-8 w-full max-w-sm">
-            <div class="text-center mb-8">
-                <div class="bg-emerald-600 w-16 h-16 rounded-2xl flex items-center justify-center text-white text-3xl font-black italic mx-auto mb-4">E</div>
-                <h1 class="text-2xl font-black tracking-tighter uppercase text-slate-800">Admin Login</h1>
-            </div>
+        <div class="bg-white p-8 rounded-[2rem] w-full max-w-sm shadow-2xl text-center">
+            <div class="bg-emerald-600 w-16 h-16 rounded-2xl flex items-center justify-center text-white text-3xl font-black italic mx-auto mb-4">E</div>
+            <h1 class="text-2xl font-black uppercase text-slate-800 mb-8 tracking-tighter">Admin Portal</h1>
             
-            <input type="text" id="username" placeholder="Username" class="w-full p-4 mb-3 bg-slate-50 border rounded-xl font-bold outline-none">
-            <input type="password" id="password" placeholder="Password" class="w-full p-4 mb-4 bg-slate-50 border rounded-xl font-bold outline-none">
-            
-            <button onclick="handleLogin()" class="w-full bg-emerald-600 text-white p-4 rounded-xl font-black uppercase tracking-widest mb-3">Login</button>
-            
-            <button onclick="handleGoogleLogin()" class="w-full bg-white border border-slate-200 text-slate-700 p-4 rounded-xl font-bold uppercase text-xs flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
+            <button onclick="handleGoogleLogin()" class="w-full bg-white border border-slate-200 text-slate-700 p-4 rounded-xl font-bold uppercase text-xs flex items-center justify-center gap-2 hover:bg-slate-50 transition-all mb-4">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">
                 Continue with Google
             </button>
+
+            <div class="relative my-6"><hr><span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-[10px] text-slate-400 font-bold">OR</span></div>
+
+            <input type="text" id="username" placeholder="Username" autocapitalize="none" class="w-full p-4 mb-3 bg-slate-50 border rounded-xl font-bold text-sm outline-none">
+            <input type="password" id="password" placeholder="Password" class="w-full p-4 mb-4 bg-slate-50 border rounded-xl font-bold text-sm outline-none">
+            <button onclick="handleLogin()" class="w-full bg-slate-800 text-white p-4 rounded-xl font-black uppercase tracking-widest text-sm">Login</button>
         </div>
     </div>
 
     <div id="dashboard" class="hidden">
-        <header class="bg-white px-4 py-3 flex justify-between items-center border-b shadow-sm">
+        <header class="bg-white px-4 py-3 flex justify-between items-center border-b sticky top-0 z-50">
             <div class="flex items-center gap-2">
                 <div class="bg-emerald-600 p-2 rounded-lg text-white font-black italic">E</div>
                 <h2 class="text-sm font-black uppercase">The Educators Portal</h2>
             </div>
-            <button onclick="handleLogout()" class="text-[10px] font-black text-red-500 bg-red-50 px-4 py-2 rounded-full border border-red-100 uppercase">Logout</button>
+            <div class="flex gap-1">
+                <button onclick="downloadBackup()" class="text-[8px] font-black text-emerald-700 bg-emerald-50 px-3 py-2 rounded-full border border-emerald-100 uppercase">Backup</button>
+                <button onclick="handleLogout()" class="text-[8px] font-black text-red-500 bg-red-50 px-3 py-2 rounded-full border border-red-100 uppercase">Logout</button>
+            </div>
         </header>
-        <div class="p-6 text-center font-bold">Welcome to Dashboard!</div>
+
+        <div class="p-4 max-w-5xl mx-auto space-y-6">
+            <div class="flex gap-2 bg-white p-2 rounded-2xl shadow-sm border">
+                <input type="text" id="search-input" placeholder="Enter SR No..." class="flex-1 p-3 outline-none font-bold uppercase text-sm" onkeyup="if(event.key==='Enter') performSearch()">
+                <button onclick="performSearch()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px]">Search</button>
+            </div>
+
+            <div id="results-area" class="space-y-6">
+                </div>
+        </div>
     </div>
 </div>
 
 <script>
-    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyBwkBy_EzDFx6Xd_U7pE6Ud-jC9uL3tKiE",
         authDomain: "theeducator-37df7.firebaseapp.com",
@@ -64,42 +74,88 @@
 
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    const db = firebase.firestore();
+    const appId = "theeducator-37df7";
 
-    // Monitor Auth State
+    const getCol = (name) => db.collection('artifacts').doc(appId).collection('public').doc('data').collection(name);
+
+    // Monitoring Auth State
     auth.onAuthStateChanged(user => {
         if (user) {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
+            performSearch();
         } else {
             document.getElementById('login-screen').classList.remove('hidden');
             document.getElementById('dashboard').classList.add('hidden');
         }
     });
 
-    // Google Login Function
     async function handleGoogleLogin() {
         const provider = new firebase.auth.GoogleAuthProvider();
         try {
-            showToast("Connecting to Google...", "bg-blue-600");
+            showToast("Connecting...", "bg-blue-600");
             await auth.signInWithPopup(provider);
-            showToast("Logged in successfully!", "bg-emerald-600");
-        } catch (error) {
-            console.error("Google Auth Error:", error);
-            showToast("Login Failed: " + error.message, "bg-red-500");
+            showToast("Login Success!", "bg-emerald-600");
+        } catch (e) {
+            console.error(e);
+            showToast("Login Failed: " + e.message, "bg-red-500");
         }
     }
 
-    // Normal Login
     async function handleLogin() {
         const u = document.getElementById('username').value.trim().toLowerCase();
         const p = document.getElementById('password').value;
         const email = u.includes('@') ? u : `${u}@school.com`;
-        try {
-            await auth.signInWithEmailAndPassword(email, p);
-        } catch(e) { showToast("Login Error", "bg-red-500"); }
+        try { 
+            showToast("Verifying...", "bg-blue-600");
+            await auth.signInWithEmailAndPassword(email, p); 
+        } catch(e) { showToast("Invalid Login", "bg-red-500"); }
     }
 
     function handleLogout() { auth.signOut(); }
+
+    async function performSearch() {
+        const term = document.getElementById('search-input').value.trim();
+        const area = document.getElementById('results-area');
+        if(!term) { area.innerHTML = `<p class="text-center py-20 text-slate-300 font-bold uppercase text-xs">Enter SR Number</p>`; return; }
+        
+        area.innerHTML = `<p class="text-center py-20 animate-pulse font-black text-emerald-600">SEARCHING...</p>`;
+        try {
+            const docRef = await getCol('contacts').doc(term).get();
+            if (!docRef.exists) { area.innerHTML = `<p class="text-center py-20 text-red-400 font-bold">SR NOT FOUND</p>`; return; }
+            const s = docRef.data();
+            area.innerHTML = `
+                <div class="info-card overflow-hidden">
+                    <div class="bg-slate-900 p-6 text-white flex justify-between items-center">
+                        <div><h2 class="text-xl font-black uppercase">${s['STUDENT NAME']}</h2><p class="text-xs text-emerald-400 font-bold italic">${s['FATHER NAME']}</p></div>
+                        <span class="bg-emerald-600 px-3 py-1 rounded-lg text-[10px] font-black">SR: ${docRef.id}</span>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div><p class="text-[9px] text-slate-400 font-black uppercase">Class / Section</p><p class="font-bold">${s['Class']} - ${s['Section']}</p></div>
+                            <div><p class="text-[9px] text-slate-400 font-black uppercase">Mobile Number</p><p class="font-bold">${s['MOBILE']}</p></div>
+                        </div>
+                        <div class="flex gap-2 items-end">
+                            <a href="tel:${s['MOBILE']}" class="flex-1 bg-emerald-600 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase">Call Now</a>
+                            <a href="https://wa.me/${s['MOBILE']}" target="_blank" class="flex-1 bg-slate-800 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase">WhatsApp</a>
+                        </div>
+                    </div>
+                </div>`;
+        } catch(e) { area.innerHTML = "Error loading data."; }
+    }
+
+    async function downloadBackup() {
+        try {
+            showToast("Exporting Excel...", "bg-blue-600");
+            const snap = await getCol('contacts').get();
+            const data = snap.docs.map(d => ({ ID: d.id, ...d.data() }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Students");
+            XLSX.writeFile(wb, "Educators_System_Backup.xlsx");
+        } catch(e) { showToast("Export Failed", "bg-red-500"); }
+    }
 
     function showToast(msg, color) {
         const t = document.getElementById('toast-msg');
@@ -109,5 +165,6 @@
         setTimeout(() => t.style.display = 'none', 3000);
     }
 </script>
+
 </body>
 </html>
