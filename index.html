@@ -31,19 +31,31 @@
 <div id="app" class="min-h-screen pb-10">
     <div id="toast-msg" class="toast"></div>
 
-    <!-- Login Screen -->
-    <div id="login-screen" class="flex items-center justify-center min-h-screen p-6 bg-slate-900">
-        <div class="bg-white p-8 rounded-[2rem] w-full max-w-sm shadow-2xl">
-            <div class="text-center mb-8">
-                <div class="bg-emerald-600 w-16 h-16 rounded-2xl flex items-center justify-center text-white text-3xl font-black italic mx-auto mb-4">E</div>
-                <h1 class="text-2xl font-black tracking-tighter uppercase text-slate-800">Admin Login</h1>
-                <p class="text-[10px] font-bold text-slate-400 mt-1 uppercase">The Educators Portal</p>
-            </div>
-            <input type="text" id="username" placeholder="USERNAME" class="w-full p-4 mb-3 bg-slate-50 border rounded-xl font-bold uppercase text-sm outline-none focus:ring-2 focus:ring-emerald-500">
-            <input type="password" id="password" placeholder="PASSWORD" class="w-full p-4 mb-4 bg-slate-50 border rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-emerald-500">
-            <button onclick="handleLogin()" class="w-full bg-emerald-600 text-white p-4 rounded-xl font-black uppercase tracking-widest hover:bg-emerald-700 transition-all">Login</button>
+   <!-- Login Screen -->
+<div id="login-screen" class="flex items-center justify-center min-h-screen p-6 bg-slate-900">
+    <div class="bg-white p-8 rounded-[2rem] w-full max-w-sm shadow-2xl">
+        <div class="text-center mb-8">
+            <div class="bg-emerald-600 w-16 h-16 rounded-2xl flex items-center justify-center text-white text-3xl font-black italic mx-auto mb-4">E</div>
+            <h1 class="text-2xl font-black tracking-tighter uppercase text-slate-800">Admin Login</h1>
+            <p class="text-[10px] font-bold text-slate-400 mt-1 uppercase">The Educators Portal</p>
         </div>
+
+        <!-- ✅ FIXED USERNAME FIELD -->
+        <input type="text" id="username" placeholder="Username"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
+            style="text-transform: none;"
+            class="w-full p-4 mb-3 bg-slate-50 border rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-emerald-500 normal-case">
+
+        <input type="password" id="password" placeholder="PASSWORD"
+            class="w-full p-4 mb-4 bg-slate-50 border rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+
+        <button onclick="handleLogin()" class="w-full bg-emerald-600 text-white p-4 rounded-xl font-black uppercase tracking-widest hover:bg-emerald-700 transition-all">
+            Login
+        </button>
     </div>
+</div>
 
     <!-- Dashboard -->
     <div id="dashboard" class="hidden">
