@@ -6,43 +6,31 @@
     <title>The Educators - Management System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
-        .info-card { background: white; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-        .search-container { background: white; padding: 6px; border-radius: 20px; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
-        .history-item { background: #f1f5f9; padding: 8px; border-radius: 10px; border-left: 4px solid #10b981; margin-top: 5px; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #f1f5f9; text-align: left; padding: 12px; font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: 900; }
-        td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 11px; font-weight: 600; }
-        .list-container { background: white; border-radius: 15px; overflow: hidden; border: 1px solid #e2e8f0; }
-        .detail-label { font-size: 9px; color: #94a3b8; font-weight: 900; text-transform: uppercase; }
-        .detail-value { font-size: 13px; color: #1e293b; font-weight: 700; text-transform: uppercase; }
-        .modal { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 24px; border-radius: 12px; font-weight: bold; color: white; z-index: 1000; display: none; }
+        .login-card { background: white; border-radius: 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
     </style>
 </head>
 <body>
 
-<div id="app" class="min-h-screen pb-10">
+<div id="app" class="min-h-screen">
     <div id="toast-msg" class="toast"></div>
 
     <div id="login-screen" class="flex items-center justify-center min-h-screen p-6 bg-slate-900">
-        <div class="bg-white p-8 rounded-[2rem] w-full max-w-sm shadow-2xl">
+        <div class="login-card p-8 w-full max-w-sm">
             <div class="text-center mb-8">
                 <div class="bg-emerald-600 w-16 h-16 rounded-2xl flex items-center justify-center text-white text-3xl font-black italic mx-auto mb-4">E</div>
                 <h1 class="text-2xl font-black tracking-tighter uppercase text-slate-800">Admin Login</h1>
-                <p class="text-[10px] font-bold text-slate-400 mt-1 uppercase">The Educators Portal</p>
             </div>
             
-            <input type="text" id="username" placeholder="Username" autocapitalize="none" autocomplete="off" class="w-full p-4 mb-3 bg-slate-50 border rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-emerald-500">
-            <input type="password" id="password" placeholder="Password" class="w-full p-4 mb-4 bg-slate-50 border rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+            <input type="text" id="username" placeholder="Username" class="w-full p-4 mb-3 bg-slate-50 border rounded-xl font-bold outline-none">
+            <input type="password" id="password" placeholder="Password" class="w-full p-4 mb-4 bg-slate-50 border rounded-xl font-bold outline-none">
             
-            <button onclick="handleLogin()" class="w-full bg-emerald-600 text-white p-4 rounded-xl font-black uppercase tracking-widest hover:bg-emerald-700 transition-all mb-3">Login</button>
+            <button onclick="handleLogin()" class="w-full bg-emerald-600 text-white p-4 rounded-xl font-black uppercase tracking-widest mb-3">Login</button>
             
             <button onclick="handleGoogleLogin()" class="w-full bg-white border border-slate-200 text-slate-700 p-4 rounded-xl font-bold uppercase text-xs flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">
@@ -52,88 +40,19 @@
     </div>
 
     <div id="dashboard" class="hidden">
-        <header class="bg-white px-4 py-3 flex justify-between items-center border-b sticky top-0 z-50">
+        <header class="bg-white px-4 py-3 flex justify-between items-center border-b shadow-sm">
             <div class="flex items-center gap-2">
                 <div class="bg-emerald-600 p-2 rounded-lg text-white font-black italic">E</div>
-                <div class="hidden sm:block">
-                    <h2 class="text-sm font-black leading-none uppercase">The Educators</h2>
-                    <span class="text-[8px] font-bold text-emerald-600 uppercase tracking-widest">Portal System</span>
-                </div>
+                <h2 class="text-sm font-black uppercase">The Educators Portal</h2>
             </div>
-            <div class="flex gap-1 flex-wrap justify-end">
-                <button onclick="openAddModal()" class="text-[8px] font-black text-white bg-emerald-600 px-3 py-2 rounded-full uppercase shadow-md">+ Add Student</button>
-                <button onclick="downloadBackup()" class="text-[8px] font-black text-amber-700 bg-amber-50 px-3 py-2 rounded-full uppercase border border-amber-100">Backup</button>
-                <button onclick="handleLogout()" class="text-[8px] font-black text-red-500 bg-red-50 px-3 py-2 rounded-full uppercase border border-red-100">Logout</button>
-            </div>
+            <button onclick="handleLogout()" class="text-[10px] font-black text-red-500 bg-red-50 px-4 py-2 rounded-full border border-red-100 uppercase">Logout</button>
         </header>
-
-        <div class="p-4 max-w-5xl mx-auto space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm grid grid-cols-3 gap-2">
-                    <div class="text-center border-r">
-                        <p class="text-[8px] font-black text-slate-400 uppercase">Total Students</p>
-                        <p id="count-contacts" class="text-lg font-black text-blue-600">0</p>
-                    </div>
-                    <div class="text-center border-r">
-                        <p class="text-[8px] font-black text-slate-400 uppercase">Today's Calls</p>
-                        <p id="count-today" class="text-lg font-black text-emerald-600">0</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-[8px] font-black text-slate-400 uppercase">Yesterday</p>
-                        <p id="count-yesterday" class="text-lg font-black text-amber-600">0</p>
-                    </div>
-                </div>
-                <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
-                    <p class="text-[9px] font-black text-slate-400 uppercase mb-2">Import Students (Excel)</p>
-                    <input type="file" id="file-contacts" accept=".xlsx, .xls" class="text-[8px] font-bold text-slate-500 w-full">
-                </div>
-            </div>
-
-            <div class="search-container flex gap-2">
-                <input type="text" id="search-input" placeholder="Enter SR No..." class="flex-1 p-3 pl-5 outline-none font-bold text-slate-800 uppercase text-sm" onkeyup="if(event.key==='Enter') performSearch()">
-                <button onclick="performSearch()" class="bg-slate-900 text-white px-6 py-3 rounded-[14px] font-black uppercase text-[10px] hover:bg-black transition-all">Search</button>
-            </div>
-
-            <div id="results-area" class="space-y-6"></div>
-        </div>
-    </div>
-
-    <div id="student-modal" class="hidden fixed inset-0 z-[100] modal flex items-center justify-center p-6">
-        <div class="bg-white rounded-[2rem] w-full max-w-md p-8 shadow-2xl relative overflow-y-auto max-h-[90vh]">
-            <h3 id="modal-title" class="text-lg font-black uppercase mb-6 text-slate-800 italic">Student Details</h3>
-            <input type="hidden" id="edit-id">
-            <div class="space-y-4">
-                <div id="sr-field-container">
-                    <label class="text-[9px] font-black text-slate-400 uppercase ml-2">SR No</label>
-                    <input type="text" id="edit-sr" class="w-full p-4 bg-slate-50 border rounded-xl font-bold uppercase text-xs outline-none">
-                </div>
-                <div>
-                    <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Name</label>
-                    <input type="text" id="edit-name" class="w-full p-4 bg-slate-50 border rounded-xl font-bold uppercase text-xs outline-none">
-                </div>
-                <div>
-                    <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Father Name</label>
-                    <input type="text" id="edit-father" class="w-full p-4 bg-slate-50 border rounded-xl font-bold uppercase text-xs outline-none">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="text" id="edit-class" placeholder="CLASS" class="w-full p-4 bg-slate-50 border rounded-xl font-bold text-xs outline-none">
-                    <input type="text" id="edit-section" placeholder="SECTION" class="w-full p-4 bg-slate-50 border rounded-xl font-bold text-xs outline-none">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="text" id="edit-mobile" placeholder="MOBILE" class="w-full p-4 bg-slate-50 border rounded-xl font-bold text-xs outline-none">
-                    <input type="text" id="edit-whatsapp" placeholder="WHATSAPP" class="w-full p-4 bg-slate-50 border rounded-xl font-bold text-xs outline-none">
-                </div>
-                <input type="text" id="edit-fml" placeholder="FAMILY CODE" class="w-full p-4 bg-slate-50 border rounded-xl font-bold text-xs outline-none">
-            </div>
-            <div class="flex gap-2 mt-8">
-                <button onclick="closeModal()" class="flex-1 bg-slate-100 p-4 rounded-xl font-black uppercase text-[10px]">Cancel</button>
-                <button id="save-btn" onclick="saveStudent()" class="flex-1 bg-emerald-600 text-white p-4 rounded-xl font-black uppercase text-[10px]">Save</button>
-            </div>
-        </div>
+        <div class="p-6 text-center font-bold">Welcome to Dashboard!</div>
     </div>
 </div>
 
 <script>
+    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyBwkBy_EzDFx6Xd_U7pE6Ud-jC9uL3tKiE",
         authDomain: "theeducator-37df7.firebaseapp.com",
@@ -145,197 +64,50 @@
 
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
-    const db = firebase.firestore();
-    const appId = "theeducator-37df7";
 
-    const getCol = (name) => db.collection('artifacts').doc(appId).collection('public').doc('data').collection(name);
-
-    // --- Authentication Logic ---
-
+    // Monitor Auth State
     auth.onAuthStateChanged(user => {
         if (user) {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
-            updateCounts();
-            performSearch();
         } else {
             document.getElementById('login-screen').classList.remove('hidden');
             document.getElementById('dashboard').classList.add('hidden');
         }
     });
 
-    async function handleLogin() {
-        const u = document.getElementById('username').value.trim().toLowerCase();
-        const p = document.getElementById('password').value;
-        if(!u || !p) return showToast("Enter credentials", "bg-amber-600");
-        const email = u.includes('@') ? u : `${u}@school.com`;
-        try { 
-            showToast("Logging in...", "bg-blue-600");
-            await auth.signInWithEmailAndPassword(email, p); 
-        } catch(e) { showToast("Login Failed", "bg-red-500"); }
-    }
-
-    // New Google Login Function
+    // Google Login Function
     async function handleGoogleLogin() {
         const provider = new firebase.auth.GoogleAuthProvider();
         try {
-            showToast("Opening Google...", "bg-blue-600");
+            showToast("Connecting to Google...", "bg-blue-600");
             await auth.signInWithPopup(provider);
-            showToast("Google Login Success", "bg-emerald-600");
-        } catch (e) {
-            console.error(e);
-            showToast("Google Login Failed", "bg-red-500");
+            showToast("Logged in successfully!", "bg-emerald-600");
+        } catch (error) {
+            console.error("Google Auth Error:", error);
+            showToast("Login Failed: " + error.message, "bg-red-500");
         }
+    }
+
+    // Normal Login
+    async function handleLogin() {
+        const u = document.getElementById('username').value.trim().toLowerCase();
+        const p = document.getElementById('password').value;
+        const email = u.includes('@') ? u : `${u}@school.com`;
+        try {
+            await auth.signInWithEmailAndPassword(email, p);
+        } catch(e) { showToast("Login Error", "bg-red-500"); }
     }
 
     function handleLogout() { auth.signOut(); }
 
-    // --- Dashboard & Database Logic ---
-
-    function showToast(msg, color = 'bg-slate-800') {
+    function showToast(msg, color) {
         const t = document.getElementById('toast-msg');
         t.innerText = msg;
         t.className = `toast ${color}`;
         t.style.display = 'block';
-        setTimeout(() => { t.style.display = 'none'; }, 3000);
+        setTimeout(() => t.style.display = 'none', 3000);
     }
-
-    async function updateCounts() {
-        try {
-            const today = new Date().toLocaleDateString();
-            const [c, l] = await Promise.all([getCol('contacts').get(), getCol('logs').get()]);
-            let tC = 0;
-            l.forEach(doc => { if(doc.data().date === today) tC++; });
-            document.getElementById('count-contacts').innerText = c.size;
-            document.getElementById('count-today').innerText = tC;
-        } catch(e) {}
-    }
-
-    async function performSearch() {
-        const term = document.getElementById('search-input').value.trim();
-        const area = document.getElementById('results-area');
-        area.innerHTML = `<div class="text-center py-10 text-xs font-black text-slate-300">SEARCHING...</div>`;
-        try {
-            if (!term) {
-                const snap = await getCol('contacts').limit(15).get();
-                let html = `<div class="list-container"><table><thead><tr><th>SR NO</th><th>Name</th><th>Class</th></tr></thead><tbody>`;
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    html += `<tr class="cursor-pointer" onclick="viewStudent('${doc.id}')">
-                        <td class="text-emerald-600 font-black">${doc.id}</td>
-                        <td class="uppercase">${d['STUDENT NAME'] || 'N/A'}</td>
-                        <td class="uppercase">${d['Class'] || 'N/A'}</td>
-                    </tr>`;
-                });
-                html += `</tbody></table></div>`;
-                area.innerHTML = html;
-            } else {
-                const docRef = await getCol('contacts').doc(term).get();
-                if (!docRef.exists) return area.innerHTML = `<div class="text-center py-10 text-red-400 font-black text-xs">NOT FOUND</div>`;
-                
-                const s = docRef.data();
-                const logsSnap = await getCol('logs').where('student_id', '==', docRef.id).get();
-                const logs = logsSnap.docs.map(d => d.data());
-                area.innerHTML = renderDetailedCard(docRef.id, s, logs);
-            }
-        } catch (e) { area.innerHTML = `Error`; }
-    }
-
-    function viewStudent(id) { document.getElementById('search-input').value = id; performSearch(); }
-
-    function openAddModal() {
-        document.getElementById('modal-title').innerText = "Add New Student";
-        document.getElementById('sr-field-container').classList.remove('hidden');
-        ['edit-id','edit-sr','edit-name','edit-father','edit-class','edit-section','edit-mobile','edit-whatsapp','edit-fml'].forEach(i=>document.getElementById(i).value='');
-        document.getElementById('student-modal').classList.remove('hidden');
-    }
-
-    function closeModal() { document.getElementById('student-modal').classList.add('hidden'); }
-
-    async function saveStudent() {
-        const sr = document.getElementById('edit-sr').value.trim();
-        const id = document.getElementById('edit-id').value || sr;
-        if (!id) return;
-        const payload = {
-            'STUDENT NAME': document.getElementById('edit-name').value.trim(),
-            'FATHER NAME': document.getElementById('edit-father').value.trim(),
-            'Class': document.getElementById('edit-class').value.trim(),
-            'Section': document.getElementById('edit-section').value.trim(),
-            'MOBILE': document.getElementById('edit-mobile').value.trim(),
-            'WHATSAPP': document.getElementById('edit-whatsapp').value.trim(),
-            'search_family': document.getElementById('edit-fml').value.trim(),
-        };
-        try {
-            await getCol('contacts').doc(id).set(payload, {merge: true});
-            showToast("Saved!", "bg-emerald-600");
-            closeModal(); performSearch();
-        } catch(e) { showToast("Error", "bg-red-500"); }
-    }
-
-    function renderDetailedCard(id, data, logs) {
-        const mob = data['MOBILE'] || 'N/A';
-        const logsHtml = logs.map(l => `<div class="history-item"><p class="text-[8px] font-black text-emerald-600">${l.date}</p><p class="text-[10px] font-bold text-slate-600">${l.remark}</p></div>`).join('');
-        return `
-            <div class="info-card overflow-hidden">
-                <div class="bg-slate-900 p-6 text-white flex justify-between items-center">
-                    <div><h2 class="text-xl font-black uppercase">${data['STUDENT NAME']}</h2><p class="text-xs text-emerald-400 font-bold">${data['FATHER NAME']}</p></div>
-                    <span class="bg-emerald-600 px-3 py-1 rounded-lg text-[10px] font-black">ID: ${id}</span>
-                </div>
-                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-4">
-                        <div class="grid grid-cols-2 gap-2">
-                            <a href="tel:${mob}" class="bg-emerald-600 text-white text-center py-4 rounded-xl font-black text-[10px] uppercase">Call</a>
-                            <a href="https://wa.me/${mob.replace(/\D/g,'')}" target="_blank" class="bg-slate-800 text-white text-center py-4 rounded-xl font-black text-[10px] uppercase">WhatsApp</a>
-                        </div>
-                    </div>
-                    <div>
-                        <textarea id="rem-${id}" placeholder="Call summary..." class="w-full border rounded-xl p-3 text-xs font-bold h-20 outline-none"></textarea>
-                        <button onclick="saveRemark('${id}')" class="w-full bg-blue-600 text-white py-3 mt-2 rounded-xl font-black text-[10px] uppercase">Submit</button>
-                    </div>
-                </div>
-                <div class="px-6 pb-6 border-t pt-4">
-                    <p class="text-[9px] font-black text-slate-400 uppercase mb-2">History</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">${logsHtml || 'No logs'}</div>
-                </div>
-            </div>
-        `;
-    }
-
-    async function saveRemark(sid) {
-        const text = document.getElementById(`rem-${sid}`).value.trim();
-        if(!text) return;
-        try {
-            await getCol('logs').add({ student_id: sid, remark: text, date: new Date().toLocaleDateString(), timestamp: Date.now() });
-            performSearch();
-        } catch(e) {}
-    }
-
-    async function downloadBackup() {
-        const snap = await getCol('contacts').get();
-        const data = snap.docs.map(d => ({ ID: d.id, ...d.data() }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Students");
-        XLSX.writeFile(wb, "Educators_Backup.xlsx");
-    }
-
-    document.getElementById('file-contacts').addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = async (evt) => {
-            const wb = XLSX.read(evt.target.result, { type: 'binary' });
-            const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            showToast(`Importing ${data.length} records...`, "bg-blue-600");
-            for(const item of data) {
-                const id = (item['SR NO'] || item['ID'] || '').toString();
-                if(id) await getCol('contacts').doc(id).set(item);
-            }
-            showToast("Import Complete", "bg-emerald-600");
-            updateCounts(); performSearch();
-        };
-        reader.readAsBinaryString(file);
-    });
 </script>
-
 </body>
 </html>
