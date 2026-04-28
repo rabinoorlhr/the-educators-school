@@ -1,169 +1,138 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>The Educators - Management System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 24px; border-radius: 12px; font-weight: bold; color: white; z-index: 1000; display: none; }
-        .info-card { background: white; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Educators</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+body { font-family: sans-serif; background:#f1f5f9; }
+.toast { position:fixed; bottom:20px; right:20px; padding:10px; color:white; border-radius:10px; display:none; }
+</style>
 </head>
+
 <body>
 
-<div id="app" class="min-h-screen pb-10">
-    <div id="toast-msg" class="toast shadow-lg"></div>
+<div id="toast-msg" class="toast"></div>
 
-    <div id="login-screen" class="flex items-center justify-center min-h-screen p-6 bg-slate-900">
-        <div class="bg-white p-8 rounded-[2rem] w-full max-w-sm shadow-2xl text-center">
-            <div class="bg-emerald-600 w-16 h-16 rounded-2xl flex items-center justify-center text-white text-3xl font-black italic mx-auto mb-4">E</div>
-            <h1 class="text-2xl font-black uppercase text-slate-800 mb-8 tracking-tighter">Admin Portal</h1>
-            
-            <button onclick="handleGoogleLogin()" class="w-full bg-white border border-slate-200 text-slate-700 p-4 rounded-xl font-bold uppercase text-xs flex items-center justify-center gap-2 hover:bg-slate-50 transition-all mb-4">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">
-                Continue with Google
-            </button>
+<!-- LOGIN -->
+<div id="login-screen" class="flex items-center justify-center h-screen bg-slate-900">
+<div class="bg-white p-6 rounded-xl w-80">
+<h2 class="text-xl font-bold mb-4 text-center">Login</h2>
 
-            <div class="relative my-6"><hr><span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-[10px] text-slate-400 font-bold">OR</span></div>
+<input id="username" value="rabia@123.com" class="w-full p-2 border mb-2">
+<input id="password" value="123" type="password" class="w-full p-2 border mb-3">
 
-            <input type="text" id="username" placeholder="Username" autocapitalize="none" class="w-full p-4 mb-3 bg-slate-50 border rounded-xl font-bold text-sm outline-none">
-            <input type="password" id="password" placeholder="Password" class="w-full p-4 mb-4 bg-slate-50 border rounded-xl font-bold text-sm outline-none">
-            <button onclick="handleLogin()" class="w-full bg-slate-800 text-white p-4 rounded-xl font-black uppercase tracking-widest text-sm">Login</button>
-        </div>
-    </div>
+<button onclick="handleLogin()" class="w-full bg-green-600 text-white p-2 rounded">Login</button>
+</div>
+</div>
 
-    <div id="dashboard" class="hidden">
-        <header class="bg-white px-4 py-3 flex justify-between items-center border-b sticky top-0 z-50">
-            <div class="flex items-center gap-2">
-                <div class="bg-emerald-600 p-2 rounded-lg text-white font-black italic">E</div>
-                <h2 class="text-sm font-black uppercase">The Educators Portal</h2>
-            </div>
-            <div class="flex gap-1">
-                <button onclick="downloadBackup()" class="text-[8px] font-black text-emerald-700 bg-emerald-50 px-3 py-2 rounded-full border border-emerald-100 uppercase">Backup</button>
-                <button onclick="handleLogout()" class="text-[8px] font-black text-red-500 bg-red-50 px-3 py-2 rounded-full border border-red-100 uppercase">Logout</button>
-            </div>
-        </header>
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden p-5">
+<h1 class="text-2xl font-bold mb-4">Dashboard</h1>
 
-        <div class="p-4 max-w-5xl mx-auto space-y-6">
-            <div class="flex gap-2 bg-white p-2 rounded-2xl shadow-sm border">
-                <input type="text" id="search-input" placeholder="Enter SR No..." class="flex-1 p-3 outline-none font-bold uppercase text-sm" onkeyup="if(event.key==='Enter') performSearch()">
-                <button onclick="performSearch()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px]">Search</button>
-            </div>
+<button onclick="handleLogout()" class="bg-red-500 text-white px-4 py-2 rounded">Logout</button>
 
-            <div id="results-area" class="space-y-6">
-                </div>
-        </div>
-    </div>
+<div class="mt-5">
+<input id="search-input" placeholder="Enter SR No" class="border p-2">
+<button onclick="performSearch()" class="bg-black text-white px-3 py-2">Search</button>
+</div>
+
+<div id="results-area" class="mt-5"></div>
 </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyBwkBy_EzDFx6Xd_U7pE6Ud-jC9uL3tKiE",
-        authDomain: "theeducator-37df7.firebaseapp.com",
-        projectId: "theeducator-37df7",
-        storageBucket: "theeducator-37df7.firebasestorage.app",
-        messagingSenderId: "650246048269",
-        appId: "1:650246048269:web:1f94bf4faaf142849aa344"
-    };
+const firebaseConfig = {
+apiKey: "AIzaSyBwkBy_EzDFx6Xd_U7pE6Ud-jC9uL3tKiE",
+authDomain: "theeducator-37df7.firebaseapp.com",
+projectId: "theeducator-37df7"
+};
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const appId = "theeducator-37df7";
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-    const getCol = (name) => db.collection('artifacts').doc(appId).collection('public').doc('data').collection(name);
+const getCol = (name) => db.collection('artifacts')
+.doc('theeducator-37df7')
+.collection('public')
+.doc('data')
+.collection(name);
 
-    // Monitoring Auth State
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('dashboard').classList.remove('hidden');
-            performSearch();
-        } else {
-            document.getElementById('login-screen').classList.remove('hidden');
-            document.getElementById('dashboard').classList.add('hidden');
-        }
-    });
+const users = [
+{ username: "rabia@123.com", password: "123" },
+{ username: "admin@123.com", password: "123" }
+];
 
-    async function handleGoogleLogin() {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        try {
-            showToast("Connecting...", "bg-blue-600");
-            await auth.signInWithPopup(provider);
-            showToast("Login Success!", "bg-emerald-600");
-        } catch (e) {
-            console.error(e);
-            showToast("Login Failed: " + e.message, "bg-red-500");
-        }
-    }
+window.onload = () => {
+if(localStorage.getItem("isLoggedIn")==="true"){
+showDashboard();
+}
+};
 
-    async function handleLogin() {
-        const u = document.getElementById('username').value.trim().toLowerCase();
-        const p = document.getElementById('password').value;
-        const email = u.includes('@') ? u : `${u}@school.com`;
-        try { 
-            showToast("Verifying...", "bg-blue-600");
-            await auth.signInWithEmailAndPassword(email, p); 
-        } catch(e) { showToast("Invalid Login", "bg-red-500"); }
-    }
+function showDashboard(){
+document.getElementById('login-screen').classList.add('hidden');
+document.getElementById('dashboard').classList.remove('hidden');
+performSearch();
+}
 
-    function handleLogout() { auth.signOut(); }
+function handleLogin(){
+const u=document.getElementById('username').value.trim();
+const p=document.getElementById('password').value;
 
-    async function performSearch() {
-        const term = document.getElementById('search-input').value.trim();
-        const area = document.getElementById('results-area');
-        if(!term) { area.innerHTML = `<p class="text-center py-20 text-slate-300 font-bold uppercase text-xs">Enter SR Number</p>`; return; }
-        
-        area.innerHTML = `<p class="text-center py-20 animate-pulse font-black text-emerald-600">SEARCHING...</p>`;
-        try {
-            const docRef = await getCol('contacts').doc(term).get();
-            if (!docRef.exists) { area.innerHTML = `<p class="text-center py-20 text-red-400 font-bold">SR NOT FOUND</p>`; return; }
-            const s = docRef.data();
-            area.innerHTML = `
-                <div class="info-card overflow-hidden">
-                    <div class="bg-slate-900 p-6 text-white flex justify-between items-center">
-                        <div><h2 class="text-xl font-black uppercase">${s['STUDENT NAME']}</h2><p class="text-xs text-emerald-400 font-bold italic">${s['FATHER NAME']}</p></div>
-                        <span class="bg-emerald-600 px-3 py-1 rounded-lg text-[10px] font-black">SR: ${docRef.id}</span>
-                    </div>
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-4">
-                            <div><p class="text-[9px] text-slate-400 font-black uppercase">Class / Section</p><p class="font-bold">${s['Class']} - ${s['Section']}</p></div>
-                            <div><p class="text-[9px] text-slate-400 font-black uppercase">Mobile Number</p><p class="font-bold">${s['MOBILE']}</p></div>
-                        </div>
-                        <div class="flex gap-2 items-end">
-                            <a href="tel:${s['MOBILE']}" class="flex-1 bg-emerald-600 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase">Call Now</a>
-                            <a href="https://wa.me/${s['MOBILE']}" target="_blank" class="flex-1 bg-slate-800 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase">WhatsApp</a>
-                        </div>
-                    </div>
-                </div>`;
-        } catch(e) { area.innerHTML = "Error loading data."; }
-    }
+const found=users.find(x=>x.username===u && x.password===p);
 
-    async function downloadBackup() {
-        try {
-            showToast("Exporting Excel...", "bg-blue-600");
-            const snap = await getCol('contacts').get();
-            const data = snap.docs.map(d => ({ ID: d.id, ...d.data() }));
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Students");
-            XLSX.writeFile(wb, "Educators_System_Backup.xlsx");
-        } catch(e) { showToast("Export Failed", "bg-red-500"); }
-    }
+if(found){
+localStorage.setItem("isLoggedIn","true");
+showDashboard();
+}else{
+showToast("Invalid Login","red");
+}
+}
 
-    function showToast(msg, color) {
-        const t = document.getElementById('toast-msg');
-        t.innerText = msg;
-        t.className = `toast ${color}`;
-        t.style.display = 'block';
-        setTimeout(() => t.style.display = 'none', 3000);
-    }
+function handleLogout(){
+localStorage.removeItem("isLoggedIn");
+location.reload();
+}
+
+function showToast(msg,color="black"){
+const t=document.getElementById('toast-msg');
+t.innerText=msg;
+t.style.background=color;
+t.style.display="block";
+setTimeout(()=>t.style.display="none",2000);
+}
+
+async function performSearch(){
+const term=document.getElementById('search-input').value.trim();
+const area=document.getElementById('results-area');
+
+if(!term){
+area.innerHTML="Enter SR No";
+return;
+}
+
+area.innerHTML="Loading...";
+
+const doc=await getCol('contacts').doc(term).get();
+
+if(!doc.exists){
+area.innerHTML="Not Found";
+return;
+}
+
+const d=doc.data();
+
+area.innerHTML=`
+<div style="background:white;padding:20px;border-radius:10px">
+<h2>${d['STUDENT NAME']||'N/A'}</h2>
+<p>${d['FATHER NAME']||''}</p>
+<p>${d['Class']||''}</p>
+</div>
+`;
+}
 </script>
 
 </body>
