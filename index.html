@@ -144,7 +144,7 @@
 </div>
 
 <script>
-    // Firebase Setup (Database Only)
+    // Firebase Setup
     const firebaseConfig = {
         apiKey: "AIzaSyBwkBy_EzDFx6Xd_U7pE6Ud-jC9uL3tKiE",
         authDomain: "theeducator-37df7.firebaseapp.com",
@@ -155,17 +155,17 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const appId = "theeducator-37df7";
 
-    const getCol = (name) => db.collection('artifacts').doc(appId).collection('public').doc('data').collection(name);
+    // FIXED PATH based on image_559043.png
+    const baseDoc = db.collection('artifacts').doc('the-educator-portal').collection('public').doc('data');
+    const getCol = (name) => baseDoc.collection(name === 'contacts' ? 'users' : name);
+
     let isEditMode = false;
 
-    // --- Direct Login Logic ---
     function handleLogin() {
         const u = document.getElementById('username').value.trim().toLowerCase();
         const p = document.getElementById('password').value;
 
-        // Credentials set here
         if (u === "admin" && p === "123") {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
@@ -177,9 +177,7 @@
         }
     }
 
-    function handleLogout() {
-        window.location.reload(); // Simple reload to go back to login
-    }
+    function handleLogout() { window.location.reload(); }
 
     function showToast(msg, color = 'bg-slate-800') {
         const t = document.getElementById('toast-msg');
@@ -189,7 +187,6 @@
         setTimeout(() => { t.style.display = 'none'; }, 3000);
     }
 
-    // --- Database Functions ---
     async function updateCounts() {
         try {
             const today = new Date().toLocaleDateString();
@@ -208,13 +205,13 @@
             document.getElementById('count-contacts').innerText = c.size;
             document.getElementById('count-today').innerText = todayCount;
             document.getElementById('count-yesterday').innerText = yesterdayCount;
-        } catch(e) {}
+        } catch(e) { console.error("Count error", e); }
     }
 
     async function performSearch() {
         const term = document.getElementById('search-input').value.trim();
         const resultsArea = document.getElementById('results-area');
-        resultsArea.innerHTML = `<div class="text-center py-20 font-black text-slate-300 animate-pulse text-xs uppercase tracking-widest">Searching...</div>`;
+        resultsArea.innerHTML = `<div class="text-center py-20 font-black text-slate-300 animate-pulse text-xs uppercase tracking-widest">Searching Database...</div>`;
         
         try {
             if (!term) {
@@ -226,10 +223,10 @@
                     const d = doc.data();
                     html += `<tr class="hover:bg-slate-50 cursor-pointer" onclick="viewStudent('${doc.id}')">
                         <td class="text-emerald-600 font-black">${doc.id}</td>
-                        <td class="uppercase">${d['STUDENT NAME'] || 'N/A'}</td>
-                        <td class="uppercase text-slate-500">${d['FATHER NAME'] || 'N/A'}</td>
+                        <td class="uppercase">${d['STUDENT NAME'] || d['Student Name'] || 'N/A'}</td>
+                        <td class="uppercase text-slate-500">${d['FATHER NAME'] || d['Father Name'] || 'N/A'}</td>
                         <td class="uppercase">${d['Class'] || 'N/A'} - ${d['Section'] || ''}</td>
-                        <td class="text-blue-600 font-bold">${d['search_family'] || 'N/A'}</td>
+                        <td class="text-blue-600 font-bold">${d['search_family'] || d['FMLY #'] || 'N/A'}</td>
                     </tr>`;
                 });
                 html += `</tbody></table></div></div>`;
@@ -241,7 +238,7 @@
                     return;
                 }
                 const student = docRef.data();
-                const familyCode = (student['search_family'] || student['FMLY #'] || "").toString();
+                const familyCode = (student['search_family'] || student['Fmly Code'] || student['FMLY #'] || "").toString();
                 const logsSnap = await getCol('logs').where('student_id', '==', docRef.id).get();
                 const logs = logsSnap.docs.map(d => d.data()).sort((a,b) => b.timestamp - a.timestamp);
                 let others = [];
@@ -251,7 +248,10 @@
                 }
                 resultsArea.innerHTML = renderDetailedCard(docRef.id, student, logs, others, familyCode);
             }
-        } catch (e) { resultsArea.innerHTML = `<div class="text-center py-20 text-red-500 font-black">Error occurred.</div>`; }
+        } catch (e) { 
+            console.error(e);
+            resultsArea.innerHTML = `<div class="text-center py-20 text-red-500 font-black">Error: Check Firebase Rules & Connection.</div>`; 
+        }
     }
 
     function viewStudent(id) { document.getElementById('search-input').value = id; performSearch(); }
@@ -269,7 +269,6 @@
         document.getElementById('edit-mobile').value = '';
         document.getElementById('edit-whatsapp').value = '';
         document.getElementById('edit-fml').value = '';
-        document.getElementById('dup-warning').classList.add('hidden');
         document.getElementById('student-modal').classList.remove('hidden');
     }
 
@@ -278,8 +277,8 @@
         document.getElementById('modal-title').innerText = "Edit Student Profile";
         document.getElementById('sr-field-container').classList.add('hidden');
         document.getElementById('edit-id').value = id;
-        document.getElementById('edit-name').value = currentData['STUDENT NAME'] || '';
-        document.getElementById('edit-father').value = currentData['FATHER NAME'] || '';
+        document.getElementById('edit-name').value = currentData['STUDENT NAME'] || currentData['Student Name'] || '';
+        document.getElementById('edit-father').value = currentData['FATHER NAME'] || currentData['Father Name'] || '';
         document.getElementById('edit-class').value = currentData['Class'] || '';
         document.getElementById('edit-section').value = currentData['Section'] || '';
         document.getElementById('edit-mobile').value = currentData['MOBILE'] || currentData['Mobile No'] || '';
@@ -313,14 +312,14 @@
                     btn.innerText = "Save Details"; btn.disabled = false; return;
                 }
                 await getCol('contacts').doc(studentId).set(payload);
-                showToast("Student Added Successfully", "bg-emerald-600");
+                showToast("Student Added", "bg-emerald-600");
             } else {
                 await getCol('contacts').doc(studentId).update(payload);
-                showToast("Profile Updated", "bg-blue-600");
+                showToast("Updated", "bg-blue-600");
             }
             closeModal(); performSearch(); updateCounts();
             btn.innerText = "Save Details"; btn.disabled = false;
-        } catch(e) { showToast("Error Saving Data", "bg-red-500"); }
+        } catch(e) { showToast("Error Saving", "bg-red-500"); }
     }
 
     function renderDetailedCard(id, data, logs, family, fCode) {
@@ -335,8 +334,8 @@
         let familyHtml = family.map(m => `
             <tr class="hover:bg-slate-50 cursor-pointer" onclick="viewStudent('${m.id}')">
                 <td class="font-bold text-blue-600">${m.id}</td>
-                <td class="uppercase">${m['STUDENT NAME'] || 'N/A'}</td>
-                <td class="uppercase text-slate-500">${m['FATHER NAME'] || 'N/A'}</td>
+                <td class="uppercase">${m['STUDENT NAME'] || m['Student Name'] || 'N/A'}</td>
+                <td class="uppercase text-slate-500">${m['FATHER NAME'] || m['Father Name'] || 'N/A'}</td>
                 <td class="uppercase text-xs">${m['Class'] || 'N/A'} - ${m['Section'] || ''}</td>
                 <td class="font-bold">${m['MOBILE'] || 'N/A'}</td>
             </tr>
@@ -346,13 +345,13 @@
                 <div class="info-card overflow-hidden">
                     <div class="bg-slate-900 p-6 flex justify-between items-center text-white">
                         <div>
-                            <p class="text-[9px] font-black opacity-50 uppercase tracking-widest">Student Profile</p>
-                            <h2 class="text-xl font-black uppercase tracking-tight">${data['STUDENT NAME'] || 'N/A'}</h2>
-                            <p class="text-xs font-bold text-emerald-400 mt-1 uppercase italic">${data['FATHER NAME'] || 'N/A'}</p>
+                            <p class="text-[9px] font-black opacity-50 uppercase tracking-widest">Profile View</p>
+                            <h2 class="text-xl font-black uppercase tracking-tight">${data['STUDENT NAME'] || data['Student Name'] || 'N/A'}</h2>
+                            <p class="text-xs font-bold text-emerald-400 mt-1 uppercase italic">${data['FATHER NAME'] || data['Father Name'] || 'N/A'}</p>
                         </div>
                         <div class="flex flex-col items-end gap-2">
-                            <span class="bg-emerald-600 text-white text-xs font-black px-4 py-2 rounded-xl">ID: ${id}</span>
-                            <button onclick='openEditModal("${id}", ${JSON.stringify(data).replace(/'/g, "&apos;")})' class="text-[9px] font-black uppercase text-slate-400 border border-slate-700 px-3 py-1 rounded-lg hover:bg-slate-800 transition-all">Edit Info</button>
+                            <span class="bg-emerald-600 text-white text-xs font-black px-4 py-2 rounded-xl">SR: ${id}</span>
+                            <button onclick='openEditModal("${id}", ${JSON.stringify(data).replace(/'/g, "&apos;")})' class="text-[9px] font-black uppercase text-slate-400 border border-slate-700 px-3 py-1 rounded-lg">Edit</button>
                         </div>
                     </div>
                     <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -364,24 +363,20 @@
                                 <div><p class="detail-label">WhatsApp</p><p class="detail-value">${wa}</p></div>
                             </div>
                             <div class="grid grid-cols-2 gap-2 pt-4">
-                                <a href="tel:${mob}" class="bg-emerald-600 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-emerald-100">Call Now</a>
+                                <a href="tel:${mob}" class="bg-emerald-600 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase">Call</a>
                                 <a href="https://wa.me/${wa.toString().replace(/\D/g,'')}" target="_blank" class="bg-slate-800 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase">WhatsApp</a>
                             </div>
                         </div>
                         <div class="bg-slate-50 p-5 rounded-[2rem] border border-slate-100">
-                            <p class="text-[9px] font-black text-slate-400 uppercase mb-3 tracking-widest">Call Remarks</p>
-                            <textarea id="rem-${id}" placeholder="Type summary..." class="w-full bg-white border border-slate-200 rounded-2xl p-4 text-xs font-bold h-24 outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
-                            <button onclick="saveRemark('${id}')" id="btn-${id}" class="w-full bg-blue-600 text-white py-4 mt-3 rounded-2xl font-black uppercase text-[10px] shadow-xl shadow-blue-100">Submit Record</button>
+                            <p class="text-[9px] font-black text-slate-400 uppercase mb-3 tracking-widest">Add Call Remark</p>
+                            <textarea id="rem-${id}" placeholder="Enter summary..." class="w-full bg-white border border-slate-200 rounded-2xl p-4 text-xs font-bold h-24 outline-none"></textarea>
+                            <button onclick="saveRemark('${id}')" id="btn-${id}" class="w-full bg-blue-600 text-white py-4 mt-3 rounded-2xl font-black uppercase text-[10px]">Save Log</button>
                         </div>
                     </div>
-                    <div class="px-6 pb-6 border-t pt-4">
-                        <p class="text-[9px] font-black text-slate-400 uppercase mb-3">Recent Logs</p>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">${logsHtml || '<p class="text-[10px] text-slate-400">No logs.</p>'}</div>
-                    </div>
                 </div>
-                <div class="list-container shadow-md">
-                    <div class="bg-blue-50 p-4 border-b border-blue-100"><h3 class="text-[10px] font-black uppercase text-blue-800">Siblings / Family</h3></div>
-                    <div class="overflow-x-auto"><table><thead><tr><th>ID</th><th>Name</th><th>Father</th><th>Class/Sec</th><th>Contact</th></tr></thead><tbody>${familyHtml || '<tr><td colspan="5" class="text-center py-6 text-slate-300">No Siblings.</td></tr>'}</tbody></table></div>
+                <div class="list-container">
+                    <div class="bg-blue-50 p-4 border-b border-blue-100"><h3 class="text-[10px] font-black uppercase text-blue-800">Family Members</h3></div>
+                    <div class="overflow-x-auto"><table><thead><tr><th>ID</th><th>Name</th><th>Father</th><th>Class/Sec</th><th>Contact</th></tr></thead><tbody>${familyHtml || '<tr><td colspan="5" class="text-center py-6">No Siblings found.</td></tr>'}</tbody></table></div>
                 </div>
             </div>`;
     }
@@ -399,34 +394,34 @@
         } catch(e) { btn.innerText = "Error"; btn.disabled = false; }
     }
 
-    async function handleImport(e, colName) {
+    async function handleImport(e) {
         const file = e.target.files[0]; if (!file) return;
         const reader = new FileReader();
         reader.onload = async (evt) => {
             const wb = XLSX.read(evt.target.result, { type: 'binary' });
             const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            const col = getCol(colName);
-            let added = 0; let skipped = 0;
+            const col = getCol('contacts');
+            let added = 0;
             showToast("Importing...", "bg-blue-500");
-            for(let i=0; i<data.length; i+=50) {
-                const batch = db.batch(); const chunk = data.slice(i, i+50);
-                for(const item of chunk) {
-                    const id = (item['ID No.'] || item['SR. NO.'] || item['Student ID'] || item['ID NO'] || '').toString().trim();
-                    const fCode = (item['Fmly Code'] || item['FMLY #'] || item['Family Code'] || '').toString().trim();
-                    if(id) {
-                        const docRef = col.doc(id);
-                        const existing = await docRef.get();
-                        if(!existing.exists) { batch.set(docRef, { ...item, search_family: fCode }); added++; }
-                        else { skipped++; }
-                    }
+            
+            for(let i=0; i<data.length; i++) {
+                const item = data[i];
+                // Try multiple column names for ID
+                const id = (item['SR NO'] || item['SR. NO.'] || item['ID No.'] || item['Student ID'] || '').toString().trim();
+                const fCode = (item['Fmly Code'] || item['FMLY #'] || item['Family Code'] || '').toString().trim();
+                
+                if(id) {
+                    await col.doc(id).set({ ...item, search_family: fCode }, { merge: true });
+                    added++;
                 }
-                await batch.commit();
             }
-            showToast(`Done: ${added} Added`, "bg-emerald-600"); updateCounts(); performSearch();
+            showToast(`Imported ${added} Students`, "bg-emerald-600"); 
+            updateCounts(); 
+            performSearch();
         };
         reader.readAsBinaryString(file);
     }
-    document.getElementById('file-contacts').addEventListener('change', (e) => handleImport(e, 'contacts'));
+    document.getElementById('file-contacts').addEventListener('change', handleImport);
 
     async function downloadBackup() {
         try {
@@ -437,41 +432,39 @@
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(students), "Students");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(logs), "Logs");
             XLSX.writeFile(wb, `Backup_${new Date().toISOString().slice(0,10)}.xlsx`);
-        } catch(e) { alert("Backup error"); }
+        } catch(e) { alert("Backup failed: Check connection"); }
     }
 
     async function downloadReport(format) {
         try {
             showToast("Generating...", "bg-blue-500");
             const [lSnap, cSnap] = await Promise.all([getCol('logs').get(), getCol('contacts').get()]);
-            const sMap = new Map(); const famGroups = new Map();
-            cSnap.forEach(d => {
-                const data = d.data(); const id = d.id;
-                const fCode = (data['search_family'] || data['FMLY #'] || "").toString();
-                sMap.set(id, { ...data, id });
-                if (fCode) {
-                    if (!famGroups.has(fCode)) famGroups.set(fCode, []);
-                    famGroups.get(fCode).push(data['STUDENT NAME'] || 'N/A');
-                }
-            });
+            const sMap = new Map();
+            cSnap.forEach(d => sMap.set(d.id, d.data()));
+            
             const rows = lSnap.docs.map(doc => {
-                const l = doc.data(); const s = sMap.get(l.student_id) || {};
-                const fCode = (s['search_family'] || s['FMLY #'] || "").toString();
-                const familyNames = fCode && famGroups.has(fCode) ? famGroups.get(fCode).join(', ') : 'N/A';
-                return { "Date": l.date, "Time": l.time, "SR NO": l.student_id, "Student": s['STUDENT NAME'] || 'N/A', "Mobile": s['MOBILE'] || 'N/A', "Family": familyNames, "Remarks": l.remark };
+                const l = doc.data(); 
+                const s = sMap.get(l.student_id) || {};
+                return { 
+                    "Date": l.date, 
+                    "Time": l.time, 
+                    "SR NO": l.student_id, 
+                    "Student": s['STUDENT NAME'] || s['Student Name'] || 'N/A', 
+                    "Remarks": l.remark 
+                };
             }).sort((a,b) => b.timestamp - a.timestamp);
 
             if (format === 'excel') {
                 const ws = XLSX.utils.json_to_sheet(rows);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Call Logs");
-                XLSX.writeFile(wb, "Call_Report.xlsx");
+                XLSX.writeFile(wb, "Report.xlsx");
             } else {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF('l', 'pt', 'a4');
                 doc.text("Call Logs Report", 40, 30);
-                doc.autoTable({ head: [Object.keys(rows[0])], body: rows.map(r => Object.values(r)), startY: 50, styles: { fontSize: 7 } });
-                doc.save("Call_Report.pdf");
+                doc.autoTable({ head: [Object.keys(rows[0])], body: rows.map(r => Object.values(r)), startY: 50 });
+                doc.save("Report.pdf");
             }
         } catch(e) { console.error(e); }
     }
