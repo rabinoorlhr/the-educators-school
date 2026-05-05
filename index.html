@@ -30,6 +30,7 @@
 <div id="app" class="min-h-screen pb-10">
     <div id="toast-msg" class="toast"></div>
 
+    <!-- Login Screen -->
     <div id="login-screen" class="flex items-center justify-center min-h-screen p-6 bg-slate-900">
         <div class="bg-white p-8 rounded-[2rem] w-full max-w-sm shadow-2xl">
             <div class="text-center mb-8">
@@ -43,6 +44,7 @@
         </div>
     </div>
 
+    <!-- Main Dashboard -->
     <div id="dashboard" class="hidden">
         <header class="bg-white px-4 py-3 flex justify-between items-center border-b sticky top-0 z-50">
             <div class="flex items-center gap-2">
@@ -62,6 +64,7 @@
         </header>
 
         <div class="p-4 max-w-5xl mx-auto space-y-6">
+            <!-- Stats -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm grid grid-cols-3 gap-2">
                     <div class="text-center border-r">
@@ -83,8 +86,9 @@
                 </div>
             </div>
 
+            <!-- Search Bar -->
             <div class="search-container flex gap-2">
-                <input type="text" id="search-input" placeholder="Enter SR No..." class="flex-1 p-3 pl-5 outline-none font-bold text-slate-800 uppercase text-sm" onkeyup="if(event.key==='Enter') performSearch()">
+                <input type="text" id="search-input" placeholder="Search by SR No or Name..." class="flex-1 p-3 pl-5 outline-none font-bold text-slate-800 uppercase text-sm" onkeyup="if(event.key==='Enter') performSearch()" oninput="if(this.value.trim() === '') performSearch()">
                 <button onclick="performSearch()" class="bg-slate-900 text-white px-6 py-3 rounded-[14px] font-black uppercase text-[10px] hover:bg-black transition-all">Search</button>
             </div>
 
@@ -92,6 +96,7 @@
         </div>
     </div>
 
+    <!-- Student Modal -->
     <div id="student-modal" class="hidden fixed inset-0 z-[100] modal flex items-center justify-center p-6">
         <div class="bg-white rounded-[2rem] w-full max-w-md p-8 shadow-2xl relative overflow-y-auto max-h-[90vh]">
             <h3 id="modal-title" class="text-lg font-black uppercase mb-6 text-slate-800 italic">Add New Student</h3>
@@ -144,7 +149,7 @@
 </div>
 
 <script>
-    // Firebase Setup (Database Only)
+    // Firebase Setup
     const firebaseConfig = {
         apiKey: "AIzaSyBwkBy_EzDFx6Xd_U7pE6Ud-jC9uL3tKiE",
         authDomain: "theeducator-37df7.firebaseapp.com",
@@ -160,12 +165,10 @@
     const getCol = (name) => db.collection('artifacts').doc(appId).collection('public').doc('data').collection(name);
     let isEditMode = false;
 
-    // --- Direct Login Logic ---
+    // Login Logic
     function handleLogin() {
         const u = document.getElementById('username').value.trim().toLowerCase();
         const p = document.getElementById('password').value;
-
-        // Credentials set here
         if (u === "admin" && p === "123") {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
@@ -177,9 +180,7 @@
         }
     }
 
-    function handleLogout() {
-        window.location.reload(); // Simple reload to go back to login
-    }
+    function handleLogout() { window.location.reload(); }
 
     function showToast(msg, color = 'bg-slate-800') {
         const t = document.getElementById('toast-msg');
@@ -189,17 +190,14 @@
         setTimeout(() => { t.style.display = 'none'; }, 3000);
     }
 
-    // --- Database Functions ---
+    // Stats
     async function updateCounts() {
         try {
             const today = new Date().toLocaleDateString();
-            const yest = new Date();
-            yest.setDate(yest.getDate() - 1);
+            const yest = new Date(); yest.setDate(yest.getDate() - 1);
             const yesterdayStr = yest.toLocaleDateString();
-
             const [c, l] = await Promise.all([getCol('contacts').get(), getCol('logs').get()]);
             let todayCount = 0; let yesterdayCount = 0;
-
             l.forEach(doc => {
                 const log = doc.data();
                 if(log.date === today) todayCount++;
@@ -211,10 +209,10 @@
         } catch(e) {}
     }
 
+    // Search Logic
     async function performSearch() {
         const term = document.getElementById('search-input').value.trim();
         const resultsArea = document.getElementById('results-area');
-        resultsArea.innerHTML = `<div class="text-center py-20 font-black text-slate-300 animate-pulse text-xs uppercase tracking-widest">Searching...</div>`;
         
         try {
             if (!term) {
@@ -235,41 +233,68 @@
                 html += `</tbody></table></div></div>`;
                 resultsArea.innerHTML = html;
             } else {
+                resultsArea.innerHTML = `<div class="text-center py-20 font-black text-slate-300 animate-pulse text-xs uppercase tracking-widest">Searching...</div>`;
                 const docRef = await getCol('contacts').doc(term).get();
-                if (!docRef.exists) {
-                    resultsArea.innerHTML = `<div class="text-center py-20 text-red-400 font-black uppercase text-xs">SR No "${term}" Not Found</div>`;
-                    return;
+                if (docRef.exists) {
+                    await showDetailedView(docRef.id, docRef.data());
+                } else {
+                    const nameQuery = await getCol('contacts')
+                        .where('STUDENT NAME', '>=', term.toUpperCase())
+                        .where('STUDENT NAME', '<=', term.toUpperCase() + '\uf8ff')
+                        .limit(20)
+                        .get();
+                    if (nameQuery.empty) {
+                        resultsArea.innerHTML = `<div class="text-center py-20 text-red-400 font-black uppercase text-xs">No result found for "${term}"</div>`;
+                    } else if (nameQuery.size === 1) {
+                        const d = nameQuery.docs[0];
+                        await showDetailedView(d.id, d.data());
+                    } else {
+                        let html = `<div class="list-container shadow-sm overflow-hidden">
+                            <div class="p-4 border-b bg-slate-50 flex justify-between items-center"><h3 class="text-[10px] font-black uppercase text-slate-400">Search Results for "${term}"</h3></div>
+                            <div class="overflow-x-auto"><table><thead><tr><th>SR NO</th><th>Name</th><th>Father</th><th>Class/Sec</th><th>Action</th></tr></thead><tbody>`;
+                        nameQuery.forEach(doc => {
+                            const d = doc.data();
+                            html += `<tr class="hover:bg-slate-50">
+                                <td class="text-emerald-600 font-black">${doc.id}</td>
+                                <td class="uppercase">${d['STUDENT NAME'] || 'N/A'}</td>
+                                <td class="uppercase text-slate-500">${d['FATHER NAME'] || 'N/A'}</td>
+                                <td class="uppercase">${d['Class'] || 'N/A'} - ${d['Section'] || ''}</td>
+                                <td><button onclick="viewStudent('${doc.id}')" class="bg-blue-600 text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase">View</button></td>
+                            </tr>`;
+                        });
+                        html += `</tbody></table></div></div>`;
+                        resultsArea.innerHTML = html;
+                    }
                 }
-                const student = docRef.data();
-                const familyCode = (student['search_family'] || student['FMLY #'] || "").toString();
-                const logsSnap = await getCol('logs').where('student_id', '==', docRef.id).get();
-                const logs = logsSnap.docs.map(d => d.data()).sort((a,b) => b.timestamp - a.timestamp);
-                let others = [];
-                if (familyCode) {
-                    const famSnap = await getCol('contacts').where('search_family', '==', familyCode).get();
-                    famSnap.forEach(d => { if(d.id !== docRef.id) others.push({ id: d.id, ...d.data() }); });
-                }
-                resultsArea.innerHTML = renderDetailedCard(docRef.id, student, logs, others, familyCode);
             }
         } catch (e) { resultsArea.innerHTML = `<div class="text-center py-20 text-red-500 font-black">Error occurred.</div>`; }
     }
 
+    async function showDetailedView(id, student) {
+        const resultsArea = document.getElementById('results-area');
+        const familyCode = (student['search_family'] || student['FMLY #'] || "").toString();
+        const logsSnap = await getCol('logs').where('student_id', '==', id).get();
+        const logs = logsSnap.docs.map(d => d.data()).sort((a,b) => b.timestamp - a.timestamp);
+        let others = [];
+        if (familyCode) {
+            const famSnap = await getCol('contacts').where('search_family', '==', familyCode).get();
+            famSnap.forEach(d => { if(d.id !== id) others.push({ id: d.id, ...d.data() }); });
+        }
+        resultsArea.innerHTML = renderDetailedCard(id, student, logs, others, familyCode);
+    }
+
     function viewStudent(id) { document.getElementById('search-input').value = id; performSearch(); }
 
+    // Modals
     function openAddModal() {
         isEditMode = false;
         document.getElementById('modal-title').innerText = "Add New Student";
         document.getElementById('sr-field-container').classList.remove('hidden');
-        document.getElementById('edit-id').value = '';
-        document.getElementById('edit-sr').value = '';
-        document.getElementById('edit-name').value = '';
-        document.getElementById('edit-father').value = '';
-        document.getElementById('edit-class').value = '';
-        document.getElementById('edit-section').value = '';
-        document.getElementById('edit-mobile').value = '';
-        document.getElementById('edit-whatsapp').value = '';
-        document.getElementById('edit-fml').value = '';
-        document.getElementById('dup-warning').classList.add('hidden');
+        document.getElementById('edit-id').value = ''; document.getElementById('edit-sr').value = '';
+        document.getElementById('edit-name').value = ''; document.getElementById('edit-father').value = '';
+        document.getElementById('edit-class').value = ''; document.getElementById('edit-section').value = '';
+        document.getElementById('edit-mobile').value = ''; document.getElementById('edit-whatsapp').value = '';
+        document.getElementById('edit-fml').value = ''; document.getElementById('dup-warning').classList.add('hidden');
         document.getElementById('student-modal').classList.remove('hidden');
     }
 
@@ -295,10 +320,10 @@
         const studentId = isEditMode ? document.getElementById('edit-id').value : srNo;
         if (!studentId) { showToast("SR No is required", "bg-amber-600"); return; }
         const payload = {
-            'STUDENT NAME': document.getElementById('edit-name').value.trim(),
-            'FATHER NAME': document.getElementById('edit-father').value.trim(),
-            'Class': document.getElementById('edit-class').value.trim(),
-            'Section': document.getElementById('edit-section').value.trim(),
+            'STUDENT NAME': document.getElementById('edit-name').value.trim().toUpperCase(),
+            'FATHER NAME': document.getElementById('edit-father').value.trim().toUpperCase(),
+            'Class': document.getElementById('edit-class').value.trim().toUpperCase(),
+            'Section': document.getElementById('edit-section').value.trim().toUpperCase(),
             'MOBILE': document.getElementById('edit-mobile').value.trim(),
             'WHATSAPP': document.getElementById('edit-whatsapp').value.trim(),
             'search_family': document.getElementById('edit-fml').value.trim(),
@@ -399,6 +424,7 @@
         } catch(e) { btn.innerText = "Error"; btn.disabled = false; }
     }
 
+    // Import/Export
     async function handleImport(e, colName) {
         const file = e.target.files[0]; if (!file) return;
         const reader = new FileReader();
@@ -406,7 +432,7 @@
             const wb = XLSX.read(evt.target.result, { type: 'binary' });
             const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
             const col = getCol(colName);
-            let added = 0; let skipped = 0;
+            let added = 0;
             showToast("Importing...", "bg-blue-500");
             for(let i=0; i<data.length; i+=50) {
                 const batch = db.batch(); const chunk = data.slice(i, i+50);
@@ -416,8 +442,14 @@
                     if(id) {
                         const docRef = col.doc(id);
                         const existing = await docRef.get();
-                        if(!existing.exists) { batch.set(docRef, { ...item, search_family: fCode }); added++; }
-                        else { skipped++; }
+                        if(!existing.exists) { 
+                            const cleanedItem = {};
+                            for (const key in item) {
+                                if (typeof item[key] === 'string') cleanedItem[key] = item[key].toUpperCase();
+                                else cleanedItem[key] = item[key];
+                            }
+                            batch.set(docRef, { ...cleanedItem, search_family: fCode }); added++; 
+                        }
                     }
                 }
                 await batch.commit();
@@ -454,26 +486,57 @@
                     famGroups.get(fCode).push(data['STUDENT NAME'] || 'N/A');
                 }
             });
-            const rows = lSnap.docs.map(doc => {
-                const l = doc.data(); const s = sMap.get(l.student_id) || {};
+
+            // Sorting logs by timestamp DESC (Latest First)
+            const sortedLogs = lSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            const rows = sortedLogs.map(l => {
+                const s = sMap.get(l.student_id) || {};
                 const fCode = (s['search_family'] || s['FMLY #'] || "").toString();
                 const familyNames = fCode && famGroups.has(fCode) ? famGroups.get(fCode).join(', ') : 'N/A';
-                return { "Date": l.date, "Time": l.time, "SR NO": l.student_id, "Student": s['STUDENT NAME'] || 'N/A', "Mobile": s['MOBILE'] || 'N/A', "Family": familyNames, "Remarks": l.remark };
-            }).sort((a,b) => b.timestamp - a.timestamp);
+                return { 
+                    "Date": l.date || 'N/A', 
+                    "Time": l.time || 'N/A', 
+                    "SR NO": l.student_id || 'N/A', 
+                    "Student": s['STUDENT NAME'] || 'N/A', 
+                    "Mobile": s['MOBILE'] || s['Mobile No'] || 'N/A', 
+                    "Family": familyNames, 
+                    "Remarks": l.remark || 'N/A' 
+                };
+            });
 
             if (format === 'excel') {
                 const ws = XLSX.utils.json_to_sheet(rows);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Call Logs");
-                XLSX.writeFile(wb, "Call_Report.xlsx");
+                XLSX.writeFile(wb, `Call_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
             } else {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF('l', 'pt', 'a4');
-                doc.text("Call Logs Report", 40, 30);
-                doc.autoTable({ head: [Object.keys(rows[0])], body: rows.map(r => Object.values(r)), startY: 50, styles: { fontSize: 7 } });
-                doc.save("Call_Report.pdf");
+                doc.setFontSize(18);
+                doc.text("The Educators - Call Logs Report (Latest First)", 40, 40);
+                doc.setFontSize(10);
+                doc.text(`Generated on: ${new Date().toLocaleString()}`, 40, 60);
+                
+                doc.autoTable({ 
+                    head: [["Date", "Time", "SR NO", "Student", "Mobile", "Family Info", "Remarks"]], 
+                    body: rows.map(r => [r.Date, r.Time, r["SR NO"], r.Student, r.Mobile, r.Family, r.Remarks]), 
+                    startY: 80, 
+                    styles: { fontSize: 8, cellPadding: 5 },
+                    headStyles: { fillColor: [16, 185, 129] },
+                    alternateRowStyles: { fillColor: [245, 247, 250] },
+                    columnStyles: {
+                        6: { cellWidth: 200 } // Remarks column width
+                    }
+                });
+                doc.save(`Call_Report_${new Date().toISOString().slice(0,10)}.pdf`);
             }
-        } catch(e) { console.error(e); }
+            showToast("Report Downloaded", "bg-emerald-600");
+        } catch(e) { 
+            console.error(e); 
+            showToast("Report Error", "bg-red-500");
+        }
     }
 </script>
 </body>
