@@ -86,6 +86,20 @@
                 </div>
             </div>
 
+            <!-- Today's Call-Back Reminders Panel -->
+            <div id="reminders-section" class="hidden bg-amber-50 border border-amber-200 p-5 rounded-3xl space-y-3 shadow-sm">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xs font-black text-amber-800 uppercase tracking-wider flex items-center gap-2">
+                        <span>📅 Today's Call-Back Reminders</span>
+                        <span id="reminder-count" class="bg-amber-600 text-white text-[9px] px-2 py-0.5 rounded-full font-black">0</span>
+                    </h3>
+                    <p class="text-[9px] font-bold text-amber-600 uppercase">Follow-up List</p>
+                </div>
+                <div id="reminders-list" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+                    <!-- Dynamic Reminders loaded via JS -->
+                </div>
+            </div>
+
             <!-- Search Bar -->
             <div class="search-container flex gap-2">
                 <input type="text" id="search-input" placeholder="Search by SR No or Name..." class="flex-1 p-3 pl-5 outline-none font-bold text-slate-800 uppercase text-sm" onkeyup="if(event.key==='Enter') performSearch()" oninput="if(this.value.trim() === '') performSearch()">
@@ -215,6 +229,7 @@
             document.getElementById('dashboard').classList.remove('hidden');
             updateCounts();
             performSearch();
+            loadReminders();
             showToast("Welcome Back!", "bg-emerald-600");
         } else {
             showToast("Ghalat Username ya Password!", "bg-red-500");
@@ -472,7 +487,11 @@
                         <div class="bg-slate-50 p-5 rounded-[2rem] border border-slate-100">
                             <p class="text-[9px] font-black text-slate-400 uppercase mb-3 tracking-widest">Call Remarks</p>
                             <textarea id="rem-${id}" placeholder="Type summary..." class="w-full bg-white border border-slate-200 rounded-2xl p-4 text-xs font-bold h-24 outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
-                            <button onclick="saveRemark('${id}')" id="btn-${id}" class="w-full bg-blue-600 text-white py-4 mt-3 rounded-2xl font-black uppercase text-[10px] shadow-xl shadow-blue-100">Submit Record</button>
+                            <div class="flex items-center gap-2 mt-2 mb-1 pl-1">
+                                <input type="checkbox" id="rem-tomorrow-${id}" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer">
+                                <label for="rem-tomorrow-${id}" class="text-[10px] font-black text-slate-500 uppercase cursor-pointer select-none">Schedule Call Reminder for Tomorrow</label>
+                            </div>
+                            <button onclick="saveRemark('${id}', '${(data['STUDENT NAME'] || '').replace(/'/g, "\\'")}', '${mob}', '${data['Class'] || 'N/A'} - ${data['Section'] || ''}')" id="btn-${id}" class="w-full bg-blue-600 text-white py-4 mt-3 rounded-2xl font-black uppercase text-[10px] shadow-xl shadow-blue-100">Submit Record</button>
                         </div>
                     </div>
                     <div class="px-6 pb-6 border-t pt-4">
@@ -487,16 +506,33 @@
             </div>`;
     }
 
-    async function saveRemark(sid) {
+    async function saveRemark(sid, studentName = '', phone = '', classSec = '') {
         const text = document.getElementById(`rem-${sid}`).value.trim();
+        const scheduleCheck = document.getElementById(`rem-tomorrow-${sid}`)?.checked;
         const btn = document.getElementById(`btn-${sid}`);
         if (!text) return;
         const now = new Date();
         try {
             btn.innerText = "Saving..."; btn.disabled = true;
             await getCol('logs').add({ student_id: sid, remark: text, date: now.toLocaleDateString(), time: now.toLocaleTimeString(), timestamp: now.getTime() });
+            
+            if (scheduleCheck) {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const tomorrowStr = tomorrow.toLocaleDateString();
+                await getCol('reminders').add({
+                    student_id: sid,
+                    student_name: studentName,
+                    phone: phone,
+                    class_sec: classSec,
+                    scheduled_date: tomorrowStr,
+                    status: 'pending',
+                    timestamp: now.getTime()
+                });
+            }
+            
             btn.innerText = "Saved!";
-            setTimeout(() => { performSearch(); updateCounts(); }, 800);
+            setTimeout(() => { performSearch(); updateCounts(); loadReminders(); }, 800);
         } catch(e) { btn.innerText = "Error"; btn.disabled = false; }
     }
 
@@ -612,6 +648,56 @@
         } catch(e) { 
             console.error(e); 
             showToast("Report Error", "bg-red-500");
+        }
+    }
+
+    async function loadReminders() {
+        try {
+            const todayStr = new Date().toLocaleDateString();
+            const remindersSnap = await getCol('reminders').get();
+            const activeReminders = [];
+            remindersSnap.forEach(doc => {
+                const r = doc.data();
+                if (r.scheduled_date === todayStr && r.status !== 'done') {
+                    activeReminders.push({ id: doc.id, ...r });
+                }
+            });
+
+            const remSection = document.getElementById('reminders-section');
+            const remList = document.getElementById('reminders-list');
+            const remCount = document.getElementById('reminder-count');
+
+            if (activeReminders.length > 0) {
+                remSection.classList.remove('hidden');
+                remCount.innerText = activeReminders.length;
+                remList.innerHTML = activeReminders.map(r => `
+                    <div class="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm flex justify-between items-center gap-3">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[8px] font-black text-amber-600 uppercase">ID: ${r.student_id} | ${r.class_sec}</p>
+                            <p class="text-xs font-black uppercase text-slate-800 truncate">${r.student_name}</p>
+                            <p class="text-[10px] font-bold text-slate-500">${r.phone}</p>
+                        </div>
+                        <div class="flex gap-1 shrink-0">
+                            <a href="tel:${r.phone}" onclick="markReminderDone('${r.id}')" class="bg-emerald-600 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase hover:bg-emerald-700 transition-all shadow-sm">Call</a>
+                            <button onclick="markReminderDone('${r.id}')" class="bg-slate-100 text-slate-600 px-3 py-2 rounded-xl text-[9px] font-black uppercase hover:bg-slate-200 transition-all">Done</button>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                remSection.classList.add('hidden');
+            }
+        } catch(e) {
+            console.error("Error loading reminders:", e);
+        }
+    }
+
+    async function markReminderDone(reminderId) {
+        try {
+            await getCol('reminders').doc(reminderId).update({ status: 'done' });
+            showToast("Reminder cleared!", "bg-emerald-600");
+            loadReminders();
+        } catch(e) {
+            showToast("Error updating reminder", "bg-red-500");
         }
     }
 
