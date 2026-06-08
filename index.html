@@ -173,15 +173,26 @@
                     </div>
                 </div>
                 <div>
-                    <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Message Body</label>
+                    <div class="flex justify-between items-center ml-2">
+                        <label class="text-[9px] font-black text-slate-400 uppercase">Message Body</label>
+                        <button onclick="toggleCustomTemplateForm()" class="text-[8px] font-black text-blue-600 uppercase hover:underline">+ Save current as Template</button>
+                    </div>
                     <textarea id="sms-message" placeholder="Type your SMS message here..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs font-bold h-32 outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+                    
+                    <!-- Custom Template Save Field -->
+                    <div id="tpl-save-container" class="hidden mt-2 p-3 bg-blue-50 border border-blue-100 rounded-xl space-y-2">
+                        <p class="text-[8px] font-black text-blue-800 uppercase">Template Name</p>
+                        <div class="flex gap-2">
+                            <input type="text" id="new-tpl-name" placeholder="E.G. EXAM RESULT" class="flex-1 p-2 bg-white border rounded-lg text-[10px] font-bold uppercase outline-none focus:ring-1 focus:ring-blue-400">
+                            <button onclick="saveCurrentMessageAsTemplate()" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-[8px] font-black uppercase hover:bg-blue-700">Save</button>
+                            <button onclick="toggleCustomTemplateForm(false)" class="bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-[8px] font-black uppercase">Cancel</button>
+                        </div>
+                    </div>
                 </div>
                 <div>
                     <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Quick Templates</label>
-                    <div class="flex gap-1 flex-wrap mt-1">
-                        <button onclick="setSMSTemplate('absent')" class="text-[8px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded font-bold uppercase">Absent Alert</button>
-                        <button onclick="setSMSTemplate('fee')" class="text-[8px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded font-bold uppercase">Fee Reminder</button>
-                        <button onclick="setSMSTemplate('general')" class="text-[8px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded font-bold uppercase">General Meeting</button>
+                    <div id="quick-templates-box" class="flex gap-1 flex-wrap mt-1">
+                        <!-- Default templates and custom templates load dynamically here -->
                     </div>
                 </div>
             </div>
@@ -219,6 +230,7 @@
 
     // SMS Selection States
     let selectedSMSList = [];
+    let customTemplates = [];
 
     // Login Logic
     function handleLogin() {
@@ -230,6 +242,7 @@
             updateCounts();
             performSearch();
             loadReminders();
+            loadCustomTemplates();
             showToast("Welcome Back!", "bg-emerald-600");
         } else {
             showToast("Ghalat Username ya Password!", "bg-red-500");
@@ -272,7 +285,9 @@
         
         try {
             if (!term) {
-                const snap = await getCol('contacts').limit(30).get();
+                // Changed from limit(30) to limit(1000) so that up to 1000 recent contacts load instantly.
+                // This allows you to easily scroll and select more than 30 contacts at once.
+                const snap = await getCol('contacts').limit(1000).get();
                 let html = `<div class="list-container shadow-sm overflow-hidden">
                     <div class="p-4 border-b bg-slate-50 flex justify-between items-center flex-wrap gap-2">
                         <h3 class="text-[10px] font-black uppercase text-slate-400">Recent Students</h3>
@@ -314,7 +329,7 @@
                     const nameQuery = await getCol('contacts')
                         .where('STUDENT NAME', '>=', term.toUpperCase())
                         .where('STUDENT NAME', '<=', term.toUpperCase() + '\uf8ff')
-                        .limit(20)
+                        .limit(100)
                         .get();
                     if (nameQuery.empty) {
                         resultsArea.innerHTML = `<div class="text-center py-20 text-red-400 font-black uppercase text-xs">No result found for "${term}"</div>`;
@@ -701,6 +716,111 @@
         }
     }
 
+    // Load Custom Templates from Firebase Firestore
+    async function loadCustomTemplates() {
+        try {
+            const snap = await getCol('sms_templates').orderBy('timestamp', 'asc').get().catch(() => getCol('sms_templates').get());
+            customTemplates = [];
+            snap.forEach(doc => {
+                customTemplates.push({ id: doc.id, ...doc.data() });
+            });
+            renderTemplatesUI();
+        } catch (e) {
+            console.error("Templates loading error:", e);
+            renderTemplatesUI(); // Fallback to just default templates
+        }
+    }
+
+    // Render templates (Default + Custom Templates) in SMS Panel
+    function renderTemplatesUI() {
+        const container = document.getElementById('quick-templates-box');
+        
+        // Default static templates
+        let html = `
+            <button onclick="setSMSTemplate('absent')" class="text-[8px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded font-bold uppercase">Absent Alert</button>
+            <button onclick="setSMSTemplate('fee')" class="text-[8px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded font-bold uppercase">Fee Reminder</button>
+            <button onclick="setSMSTemplate('general')" class="text-[8px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded font-bold uppercase">General Meeting</button>
+        `;
+        
+        // Dynamically append custom templates with delete icons
+        customTemplates.forEach(t => {
+            const escapedBody = t.body.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
+            html += `
+                <div class="inline-flex items-center bg-blue-50 text-blue-700 rounded overflow-hidden border border-blue-100">
+                    <button onclick="setDirectSMSTemplate('${escapedBody}')" class="text-[8px] hover:bg-blue-100 px-2 py-1 font-bold uppercase">${t.name}</button>
+                    <button onclick="deleteCustomTemplate('${t.id}')" class="text-[8px] px-1.5 py-1 hover:bg-red-100 text-red-500 font-bold border-l border-blue-100" title="Delete Template">✕</button>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    // Toggle Custom Template Inline Form
+    function toggleCustomTemplateForm(show = true) {
+        const container = document.getElementById('tpl-save-container');
+        if (show) {
+            const currentMsg = document.getElementById('sms-message').value.trim();
+            if (!currentMsg) {
+                showToast("Pehle Message Box me template body likhein!", "bg-amber-600");
+                return;
+            }
+            container.classList.remove('hidden');
+            document.getElementById('new-tpl-name').focus();
+        } else {
+            container.classList.add('hidden');
+            document.getElementById('new-tpl-name').value = '';
+        }
+    }
+
+    // Save current textarea message as template in Firestore
+    async function saveCurrentMessageAsTemplate() {
+        const nameInput = document.getElementById('new-tpl-name');
+        const name = nameInput.value.trim().toUpperCase();
+        const body = document.getElementById('sms-message').value.trim();
+        
+        if (!name) {
+            showToast("Template ka koi name likhein!", "bg-amber-600");
+            return;
+        }
+        if (!body) {
+            showToast("Message body empty nahi ho sakti!", "bg-amber-600");
+            return;
+        }
+        
+        try {
+            await getCol('sms_templates').add({
+                name: name,
+                body: body,
+                timestamp: Date.now()
+            });
+            showToast("Template saved successfully!", "bg-emerald-600");
+            toggleCustomTemplateForm(false);
+            await loadCustomTemplates();
+        } catch (e) {
+            console.error("Error saving template:", e);
+            showToast("Template save karne me error aya!", "bg-red-500");
+        }
+    }
+
+    // Delete custom template from Firestore
+    async function deleteCustomTemplate(id) {
+        if (!confirm("Kya aap waqai is template ko delete karna chahte hain?")) return;
+        try {
+            await getCol('sms_templates').doc(id).delete();
+            showToast("Template deleted successfully!", "bg-emerald-600");
+            await loadCustomTemplates();
+        } catch (e) {
+            console.error("Error deleting template:", e);
+            showToast("Template delete karne me error aya!", "bg-red-500");
+        }
+    }
+
+    // Set custom template directly into textarea
+    function setDirectSMSTemplate(body) {
+        document.getElementById('sms-message').value = body;
+    }
+
     // SMS Core Functions
     function toggleSelectAll(type) {
         const selectAllCheck = document.getElementById(`select-all-${type}`);
@@ -775,6 +895,8 @@
         document.getElementById('sms-message').value = '';
         document.getElementById('bulk-helper-info').classList.add('hidden');
         document.getElementById('sms-modal').classList.remove('hidden');
+        toggleCustomTemplateForm(false);
+        renderTemplatesUI();
     }
 
     function openSMSModalMultiple() {
@@ -787,6 +909,8 @@
         document.getElementById('bulk-helper-info').classList.remove('hidden');
         
         document.getElementById('sms-modal').classList.remove('hidden');
+        toggleCustomTemplateForm(false);
+        renderTemplatesUI();
     }
 
     function closeSMSModal() {
@@ -832,6 +956,12 @@
             showToast("Opening SMS for all selected!", "bg-emerald-600");
             closeSMSModal();
         }
+    }
+
+    // On Load Initializations
+    window.onload = function() {
+        // Initial setup for firestore load custom templates in background
+        loadCustomTemplates();
     }
 </script>
 </body>
