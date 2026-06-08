@@ -172,12 +172,35 @@
                         <!-- Recipients list -->
                     </div>
                 </div>
+                
+                <!-- Sequential Sending Progress UI -->
+                <div id="bulk-sending-tracker" class="hidden p-4 bg-emerald-50 border border-emerald-100 rounded-2xl space-y-3">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[9px] font-black text-emerald-800 uppercase tracking-widest">Progress Tracker</span>
+                        <span id="bulk-tracker-text" class="text-[10px] font-bold text-emerald-600">0 of 0 Sent</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-1.5">
+                        <div id="bulk-tracker-bar" class="bg-emerald-600 h-1.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    
+                    <!-- Auto Sending Options -->
+                    <div class="bg-white p-3 rounded-xl border border-emerald-100 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="auto-send-checkbox" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer" onchange="toggleAutoSendMode()">
+                            <label for="auto-send-checkbox" class="text-[9px] font-black text-slate-700 uppercase cursor-pointer select-none">Auto Send (3 Sec Delay)</label>
+                        </div>
+                        <span id="auto-countdown" class="hidden bg-red-100 text-red-600 text-[9px] font-black px-2 py-0.5 rounded-full">3s</span>
+                    </div>
+                    
+                    <p id="bulk-tracker-current" class="text-[9px] font-bold text-slate-500 mt-2 uppercase">Next up: N/A</p>
+                </div>
+
                 <div>
                     <div class="flex justify-between items-center ml-2">
                         <label class="text-[9px] font-black text-slate-400 uppercase">Message Body</label>
                         <button onclick="toggleCustomTemplateForm()" class="text-[8px] font-black text-blue-600 uppercase hover:underline">+ Save current as Template</button>
                     </div>
-                    <textarea id="sms-message" placeholder="Type your SMS message here..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs font-bold h-32 outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+                    <textarea id="sms-message" placeholder="Type your SMS message here..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs font-bold h-32 outline-none focus:ring-2 focus:ring-blue-400" oninput="updateBulkInstructionCopy()"></textarea>
                     
                     <!-- Custom Template Save Field -->
                     <div id="tpl-save-container" class="hidden mt-2 p-3 bg-blue-50 border border-blue-100 rounded-xl space-y-2">
@@ -196,14 +219,17 @@
                     </div>
                 </div>
             </div>
+            
             <div class="flex flex-col gap-2 mt-6">
                 <div class="flex gap-2">
                     <button onclick="closeSMSModal()" class="flex-1 bg-slate-100 text-slate-600 p-4 rounded-xl font-black uppercase text-[10px]">Cancel</button>
-                    <button onclick="executeSMSSending()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-xl font-black uppercase text-[10px] shadow-lg shadow-blue-100">Send Now</button>
+                    <!-- Enhanced Master Send Button (Adapts to Bulk / Single) -->
+                    <button id="main-sms-send-btn" onclick="executeSMSSending()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-xl font-black uppercase text-[10px] shadow-lg shadow-blue-100">Send Now</button>
                 </div>
+                
                 <div id="bulk-helper-info" class="hidden mt-2 p-3 bg-blue-50 border border-blue-100 rounded-xl text-[9px] text-blue-800 font-bold">
                     <p class="uppercase font-black">Bulk SMS Instructions:</p>
-                    <p class="mt-1">For multi-recipients, your native SMS app will load all selected numbers. You can also copy all numbers below for external SMS software:</p>
+                    <p class="mt-1">One-by-one mode prevents mobile phone from converting bulk list into MMS. If you prefer to send using external software/devices, copy all numbers below:</p>
                     <textarea id="bulk-numbers-copy" readonly class="w-full mt-2 p-2 bg-white border border-blue-200 rounded text-xs select-all outline-none font-bold" onclick="this.select()"></textarea>
                 </div>
             </div>
@@ -231,6 +257,12 @@
     // SMS Selection States
     let selectedSMSList = [];
     let customTemplates = [];
+    
+    // Multi-SMS Loop Queue States
+    let bulkQueueIndex = 0;
+    let isBulkLoopActive = false;
+    let autoSendTimer = null;
+    let countdownInterval = null;
 
     // Helper: Clean and format Pakistani mobile number (Sirf digits, leading Zero se shuru ho)
     function sanitizeSMSPhone(phoneStr) {
@@ -323,7 +355,7 @@
                     const safeName = (d['STUDENT NAME'] || '').replace(/'/g, "\\'");
                     html += `<tr class="hover:bg-slate-50 cursor-pointer">
                         <td class="text-center" onclick="event.stopPropagation();">
-                            <input type="checkbox" class="student-checkbox-recent w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500" data-id="${doc.id}" data-name="${d['STUDENT NAME'] || ''}" data-phone="${mob}" onclick="updateSelection()">
+                            <input type="checkbox" class="student-checkbox-recent w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer" data-id="${doc.id}" data-name="${d['STUDENT NAME'] || ''}" data-phone="${mob}" onclick="updateSelection()">
                         </td>
                         <td class="text-emerald-600 font-black" onclick="viewStudent('${doc.id}')">${doc.id}</td>
                         <td class="uppercase" onclick="viewStudent('${doc.id}')">${d['STUDENT NAME'] || 'N/A'}</td>
@@ -373,7 +405,7 @@
                             const safeName = (d['STUDENT NAME'] || '').replace(/'/g, "\\'");
                             html += `<tr class="hover:bg-slate-50">
                                 <td class="text-center">
-                                    <input type="checkbox" class="student-checkbox-search w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500" data-id="${doc.id}" data-name="${d['STUDENT NAME'] || ''}" data-phone="${mob}" onclick="updateSelection()">
+                                    <input type="checkbox" class="student-checkbox-search w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer" data-id="${doc.id}" data-name="${d['STUDENT NAME'] || ''}" data-phone="${mob}" onclick="updateSelection()">
                                 </td>
                                 <td class="text-emerald-600 font-black">${doc.id}</td>
                                 <td class="uppercase">${d['STUDENT NAME'] || 'N/A'}</td>
@@ -856,6 +888,7 @@
     // Set custom template directly into textarea
     function setDirectSMSTemplate(body) {
         document.getElementById('sms-message').value = body;
+        updateBulkInstructionCopy();
     }
 
     // SMS Core Functions
@@ -868,6 +901,7 @@
         updateSelection();
     }
 
+    // Selection processing logic
     function updateSelection() {
         selectedSMSList = [];
         const checkboxes = document.querySelectorAll('.student-checkbox-recent, .student-checkbox-search');
@@ -931,9 +965,18 @@
             return;
         }
         selectedSMSList = [{ id: 'single', name: name, phone: cleanedPhone }];
+        
+        // Reset bulk loop states
+        isBulkLoopActive = false;
+        bulkQueueIndex = 0;
+        clearAutoSendTimers();
+        
+        // UI Reset
+        document.getElementById('bulk-sending-tracker').classList.add('hidden');
         document.getElementById('sms-recipients-list').innerText = `${name} (${cleanedPhone})`;
         document.getElementById('sms-message').value = '';
         document.getElementById('bulk-helper-info').classList.add('hidden');
+        document.getElementById('main-sms-send-btn').innerText = "Send Now";
         document.getElementById('sms-modal').classList.remove('hidden');
         toggleCustomTemplateForm(false);
         renderTemplatesUI();
@@ -946,21 +989,133 @@
             phone: sanitizeSMSPhone(s.phone)
         })).filter(s => s.phone !== '');
 
+        // Reset bulk states & target index
+        isBulkLoopActive = selectedSMSList.length > 1;
+        bulkQueueIndex = 0;
+        clearAutoSendTimers();
+
         const listText = selectedSMSList.map(s => `${s.name} (${s.phone})`).join(', ');
         document.getElementById('sms-recipients-list').innerText = listText;
         document.getElementById('sms-message').value = '';
         
-        const rawNumbers = selectedSMSList.map(s => s.phone).join(', ');
-        document.getElementById('bulk-numbers-copy').value = rawNumbers;
-        document.getElementById('bulk-helper-info').classList.remove('hidden');
+        // Reset checkboxes inside auto-send UI
+        document.getElementById('auto-send-checkbox').checked = false;
+        document.getElementById('auto-countdown').classList.add('hidden');
+
+        // Update tracker UI for bulk loop
+        if (isBulkLoopActive) {
+            document.getElementById('bulk-sending-tracker').classList.remove('hidden');
+            updateBulkTrackerUI();
+            document.getElementById('main-sms-send-btn').innerText = "Start Sending (1 by 1)";
+        } else {
+            document.getElementById('bulk-sending-tracker').classList.add('hidden');
+            document.getElementById('main-sms-send-btn').innerText = "Send Now";
+        }
         
+        // Update helper copy textarea
+        updateBulkInstructionCopy();
+        
+        document.getElementById('bulk-helper-info').classList.remove('hidden');
         document.getElementById('sms-modal').classList.remove('hidden');
         toggleCustomTemplateForm(false);
         renderTemplatesUI();
     }
 
+    // Helper: dynamic copy generator with customized messages
+    function updateBulkInstructionCopy() {
+        const msg = document.getElementById('sms-message').value.trim();
+        const copyArea = document.getElementById('bulk-numbers-copy');
+        if (selectedSMSList.length > 0) {
+            // Numbers comma separated for external apps
+            const rawNumbers = selectedSMSList.map(s => s.phone).join(', ');
+            copyArea.value = rawNumbers;
+        }
+    }
+
+    function updateBulkTrackerUI() {
+        const total = selectedSMSList.length;
+        const currentNum = bulkQueueIndex + 1;
+        
+        if (bulkQueueIndex < total) {
+            const currentStudent = selectedSMSList[bulkQueueIndex];
+            document.getElementById('bulk-tracker-text').innerText = `${bulkQueueIndex} of ${total} Sent`;
+            document.getElementById('bulk-tracker-current').innerText = `Next: ${currentStudent.name} (${currentStudent.phone})`;
+            
+            const pct = (bulkQueueIndex / total) * 100;
+            document.getElementById('bulk-tracker-bar').style.width = `${pct}%`;
+            
+            // Adjust send button state dynamically
+            const autoActive = document.getElementById('auto-send-checkbox').checked;
+            if (autoActive && bulkQueueIndex > 0) {
+                document.getElementById('main-sms-send-btn').innerText = "Auto-sending in progress...";
+            } else {
+                document.getElementById('main-sms-send-btn').innerText = bulkQueueIndex === 0 ? "Start Sending" : `Send to Student ${currentNum} of ${total}`;
+            }
+        } else {
+            document.getElementById('bulk-tracker-text').innerText = `${total} of ${total} Completed!`;
+            document.getElementById('bulk-tracker-current').innerText = "All Selected SMS opened successfully!";
+            document.getElementById('bulk-tracker-bar').style.width = "100%";
+            document.getElementById('main-sms-send-btn').innerText = "All Sent! Close Panel";
+            clearAutoSendTimers();
+        }
+    }
+
+    // Stop and clear automated sequential delays safely
+    function clearAutoSendTimers() {
+        if (autoSendTimer) {
+            clearTimeout(autoSendTimer);
+            autoSendTimer = null;
+        }
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+        }
+        const badge = document.getElementById('auto-countdown');
+        if (badge) badge.classList.add('hidden');
+    }
+
+    // Handle auto-send checkbox toggle manually
+    function toggleAutoSendMode() {
+        const isChecked = document.getElementById('auto-send-checkbox').checked;
+        if (!isChecked) {
+            clearAutoSendTimers();
+            updateBulkTrackerUI();
+        } else {
+            if (bulkQueueIndex > 0 && bulkQueueIndex < selectedSMSList.length) {
+                startAutoSendTimer();
+            }
+        }
+    }
+
+    function startAutoSendTimer() {
+        clearAutoSendTimers();
+        
+        const badge = document.getElementById('auto-countdown');
+        badge.classList.remove('hidden');
+        let timeLeft = 3;
+        badge.innerText = `${timeLeft}s`;
+        
+        // Visual countdown
+        countdownInterval = setInterval(() => {
+            timeLeft--;
+            badge.innerText = `${timeLeft}s`;
+            if (timeLeft <= 0) {
+                clearInterval(countdownInterval);
+            }
+        }, 1000);
+
+        // Actual automated trigger after 3 seconds
+        autoSendTimer = setTimeout(() => {
+            badge.classList.add('hidden');
+            executeSMSSending();
+        }, 3000);
+    }
+
     function closeSMSModal() {
         document.getElementById('sms-modal').classList.add('hidden');
+        isBulkLoopActive = false;
+        bulkQueueIndex = 0;
+        clearAutoSendTimers();
     }
 
     function setSMSTemplate(type) {
@@ -972,34 +1127,59 @@
         } else if (type === 'general') {
             msgArea.value = "Dear Parent, a parent-teacher meeting is scheduled for this week. Your presence is highly requested. - The Educators";
         }
+        updateBulkInstructionCopy();
     }
 
+    // Core execution upgraded with one-by-one sequential routing & auto mode
     function executeSMSSending() {
         const rawMsg = document.getElementById('sms-message').value.trim();
         const msg = encodeURIComponent(rawMsg);
+        
         if (!msg) {
             showToast("Please type a message first!", "bg-amber-600");
+            clearAutoSendTimers();
             return;
         }
         if (selectedSMSList.length === 0) {
             showToast("No recipients chosen.", "bg-amber-600");
+            clearAutoSendTimers();
             return;
         }
 
-        if (selectedSMSList.length === 1) {
-            const phone = sanitizeSMSPhone(selectedSMSList[0].phone); // Perfectly cleaned with leading '0'
+        // Case 1: Single Student Mode
+        if (!isBulkLoopActive || selectedSMSList.length === 1) {
+            const phone = sanitizeSMSPhone(selectedSMSList[0].phone);
             const smsUrl = `sms:${phone}?body=${msg}`;
             window.open(smsUrl, '_blank');
             showToast("Opening SMS App...", "bg-emerald-600");
             closeSMSModal();
-        } else {
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-            const separator = isIOS ? ';' : ',';
-            const phones = selectedSMSList.map(s => sanitizeSMSPhone(s.phone)).join(separator); // Batch clean
+            return;
+        }
+
+        // Case 2: Sequential Bulk Mode Active
+        const total = selectedSMSList.length;
+        if (bulkQueueIndex < total) {
+            const currentStudent = selectedSMSList[bulkQueueIndex];
+            const phone = sanitizeSMSPhone(currentStudent.phone);
             
-            const smsUrl = `sms:${phones}?body=${msg}`;
+            // Native default trigger per student to prevent group/MMS conversions
+            const smsUrl = `sms:${phone}?body=${msg}`;
             window.open(smsUrl, '_blank');
-            showToast("Opening SMS for all selected!", "bg-emerald-600");
+            
+            showToast(`Opening SMS for ${currentStudent.name}`, "bg-blue-600");
+            
+            // Advance Queue & Refresh Tracker UI
+            bulkQueueIndex++;
+            updateBulkTrackerUI();
+
+            // Next schedule logic if "Auto Send" checkbox is active
+            const autoActive = document.getElementById('auto-send-checkbox').checked;
+            if (autoActive && bulkQueueIndex < total) {
+                startAutoSendTimer();
+            }
+        } else {
+            // Finished sending all
+            showToast("All SMS sent successfully!", "bg-emerald-600");
             closeSMSModal();
         }
     }
