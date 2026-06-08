@@ -232,6 +232,25 @@
     let selectedSMSList = [];
     let customTemplates = [];
 
+    // Helper: Clean and format Pakistani mobile number (Sirf digits, leading Zero se shuru ho)
+    function sanitizeSMSPhone(phoneStr) {
+        if (!phoneStr) return '';
+        // Sirf numbers rkhne ke liye
+        let cleaned = phoneStr.toString().replace(/\D/g, '');
+        
+        // Agar 92 se shuru ho raha hai toh 92 ko hatakar 0 lagao
+        if (cleaned.startsWith('92')) {
+            cleaned = '0' + cleaned.substring(2);
+        }
+        
+        // Agar 0 missing hai aur 3 se shuru ho raha hai (e.g. 3001234567) toh 0 add karein
+        if (cleaned.length === 10 && cleaned.startsWith('3')) {
+            cleaned = '0' + cleaned;
+        }
+        
+        return cleaned;
+    }
+
     // Login Logic
     function handleLogin() {
         const u = document.getElementById('username').value.trim().toLowerCase();
@@ -285,8 +304,6 @@
         
         try {
             if (!term) {
-                // Changed from limit(30) to limit(1000) so that up to 1000 recent contacts load instantly.
-                // This allows you to easily scroll and select more than 30 contacts at once.
                 const snap = await getCol('contacts').limit(1000).get();
                 let html = `<div class="list-container shadow-sm overflow-hidden">
                     <div class="p-4 border-b bg-slate-50 flex justify-between items-center flex-wrap gap-2">
@@ -301,7 +318,8 @@
                         <th>SR NO</th><th>Name</th><th>Father</th><th>Class/Sec</th><th>Contact Number</th><th>Family Code</th><th>Action</th></tr></thead><tbody>`;
                 snap.forEach(doc => {
                     const d = doc.data();
-                    const mob = d['MOBILE'] || d['Mobile No'] || d['CELL #'] || '';
+                    const rawMob = d['MOBILE'] || d['Mobile No'] || d['CELL #'] || '';
+                    const mob = sanitizeSMSPhone(rawMob); // Apply custom cleaning
                     const safeName = (d['STUDENT NAME'] || '').replace(/'/g, "\\'");
                     html += `<tr class="hover:bg-slate-50 cursor-pointer">
                         <td class="text-center" onclick="event.stopPropagation();">
@@ -350,7 +368,8 @@
                                 <th>SR NO</th><th>Name</th><th>Father</th><th>Class/Sec</th><th>Contact Number</th><th>Action</th></tr></thead><tbody>`;
                         nameQuery.forEach(doc => {
                             const d = doc.data();
-                            const mob = d['MOBILE'] || d['Mobile No'] || d['CELL #'] || '';
+                            const rawMob = d['MOBILE'] || d['Mobile No'] || d['CELL #'] || '';
+                            const mob = sanitizeSMSPhone(rawMob); // Clean phone
                             const safeName = (d['STUDENT NAME'] || '').replace(/'/g, "\\'");
                             html += `<tr class="hover:bg-slate-50">
                                 <td class="text-center">
@@ -429,8 +448,8 @@
             'FATHER NAME': document.getElementById('edit-father').value.trim().toUpperCase(),
             'Class': document.getElementById('edit-class').value.trim().toUpperCase(),
             'Section': document.getElementById('edit-section').value.trim().toUpperCase(),
-            'MOBILE': document.getElementById('edit-mobile').value.trim(),
-            'WHATSAPP': document.getElementById('edit-whatsapp').value.trim(),
+            'MOBILE': sanitizeSMSPhone(document.getElementById('edit-mobile').value.trim()), // Format clean mobile before saving
+            'WHATSAPP': sanitizeSMSPhone(document.getElementById('edit-whatsapp').value.trim()),
             'search_family': document.getElementById('edit-fml').value.trim(),
         };
         try {
@@ -454,23 +473,28 @@
     }
 
     function renderDetailedCard(id, data, logs, family, fCode) {
-        const mob = data['MOBILE'] || data['Mobile No'] || data['CELL #'] || 'N/A';
-        const wa = data['WHATSAPP'] || mob;
+        const rawMob = data['MOBILE'] || data['Mobile No'] || data['CELL #'] || '';
+        const mob = sanitizeSMSPhone(rawMob) || 'N/A';
+        const wa = sanitizeSMSPhone(data['WHATSAPP'] || mob);
         let logsHtml = logs.slice(0, 3).map(l => `
             <div class="history-item">
                 <p class="text-[7px] font-black text-emerald-600 uppercase">${l.date} ${l.time}</p>
                 <p class="text-[10px] font-bold text-slate-600">"${l.remark}"</p>
             </div>
         `).join('');
-        let familyHtml = family.map(m => `
-            <tr class="hover:bg-slate-50 cursor-pointer" onclick="viewStudent('${m.id}')">
-                <td class="font-bold text-blue-600">${m.id}</td>
-                <td class="uppercase">${m['STUDENT NAME'] || 'N/A'}</td>
-                <td class="uppercase text-slate-500">${m['FATHER NAME'] || 'N/A'}</td>
-                <td class="uppercase text-xs">${m['Class'] || 'N/A'} - ${m['Section'] || ''}</td>
-                <td class="font-bold">${m['MOBILE'] || 'N/A'}</td>
-            </tr>
-        `).join('');
+        let familyHtml = family.map(m => {
+            const rawFamMob = m['MOBILE'] || m['Mobile No'] || m['CELL #'] || '';
+            const famMob = sanitizeSMSPhone(rawFamMob) || 'N/A';
+            return `
+                <tr class="hover:bg-slate-50 cursor-pointer" onclick="viewStudent('${m.id}')">
+                    <td class="font-bold text-blue-600">${m.id}</td>
+                    <td class="uppercase">${m['STUDENT NAME'] || 'N/A'}</td>
+                    <td class="uppercase text-slate-500">${m['FATHER NAME'] || 'N/A'}</td>
+                    <td class="uppercase text-xs">${m['Class'] || 'N/A'} - ${m['Section'] || ''}</td>
+                    <td class="font-bold">${famMob}</td>
+                </tr>
+            `;
+        }).join('');
         return `
             <div class="space-y-6">
                 <div class="info-card overflow-hidden">
@@ -538,7 +562,7 @@
                 await getCol('reminders').add({
                     student_id: sid,
                     student_name: studentName,
-                    phone: phone,
+                    phone: sanitizeSMSPhone(phone), // Clean reminder phone number
                     class_sec: classSec,
                     scheduled_date: tomorrowStr,
                     status: 'pending',
@@ -572,9 +596,18 @@
                         if(!existing.exists) { 
                             const cleanedItem = {};
                             for (const key in item) {
-                                if (typeof item[key] === 'string') cleanedItem[key] = item[key].toUpperCase();
-                                else cleanedItem[key] = item[key];
+                                if (typeof item[key] === 'string') {
+                                    cleanedItem[key] = item[key].toUpperCase();
+                                } else {
+                                    cleanedItem[key] = item[key];
+                                }
                             }
+                            
+                            // Format clean phone fields on import
+                            if (cleanedItem['MOBILE']) cleanedItem['MOBILE'] = sanitizeSMSPhone(cleanedItem['MOBILE']);
+                            if (cleanedItem['Mobile No']) cleanedItem['Mobile No'] = sanitizeSMSPhone(cleanedItem['Mobile No']);
+                            if (cleanedItem['CELL #']) cleanedItem['CELL #'] = sanitizeSMSPhone(cleanedItem['CELL #']);
+
                             batch.set(docRef, { ...cleanedItem, search_family: fCode }); added++; 
                         }
                     }
@@ -622,12 +655,13 @@
                 const s = sMap.get(l.student_id) || {};
                 const fCode = (s['search_family'] || s['FMLY #'] || "").toString();
                 const familyNames = fCode && famGroups.has(fCode) ? famGroups.get(fCode).join(', ') : 'N/A';
+                const mob = sanitizeSMSPhone(s['MOBILE'] || s['Mobile No'] || 'N/A');
                 return { 
                     "Date": l.date || 'N/A', 
                     "Time": l.time || 'N/A', 
                     "SR NO": l.student_id || 'N/A', 
                     "Student": s['STUDENT NAME'] || 'N/A', 
-                    "Mobile": s['MOBILE'] || s['Mobile No'] || 'N/A', 
+                    "Mobile": mob, 
                     "Family": familyNames, 
                     "Remarks": l.remark || 'N/A' 
                 };
@@ -685,19 +719,22 @@
             if (activeReminders.length > 0) {
                 remSection.classList.remove('hidden');
                 remCount.innerText = activeReminders.length;
-                remList.innerHTML = activeReminders.map(r => `
-                    <div class="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm flex justify-between items-center gap-3">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-[8px] font-black text-amber-600 uppercase">ID: ${r.student_id} | ${r.class_sec}</p>
-                            <p class="text-xs font-black uppercase text-slate-800 truncate">${r.student_name}</p>
-                            <p class="text-[10px] font-bold text-slate-500">${r.phone}</p>
+                remList.innerHTML = activeReminders.map(r => {
+                    const cleanPhone = sanitizeSMSPhone(r.phone);
+                    return `
+                        <div class="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm flex justify-between items-center gap-3">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[8px] font-black text-amber-600 uppercase">ID: ${r.student_id} | ${r.class_sec}</p>
+                                <p class="text-xs font-black uppercase text-slate-800 truncate">${r.student_name}</p>
+                                <p class="text-[10px] font-bold text-slate-500">${cleanPhone}</p>
+                            </div>
+                            <div class="flex gap-1 shrink-0">
+                                <a href="tel:${cleanPhone}" onclick="markReminderDone('${r.id}')" class="bg-emerald-600 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase hover:bg-emerald-700 transition-all shadow-sm">Call</a>
+                                <button onclick="markReminderDone('${r.id}')" class="bg-slate-100 text-slate-600 px-3 py-2 rounded-xl text-[9px] font-black uppercase hover:bg-slate-200 transition-all">Done</button>
+                            </div>
                         </div>
-                        <div class="flex gap-1 shrink-0">
-                            <a href="tel:${r.phone}" onclick="markReminderDone('${r.id}')" class="bg-emerald-600 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase hover:bg-emerald-700 transition-all shadow-sm">Call</a>
-                            <button onclick="markReminderDone('${r.id}')" class="bg-slate-100 text-slate-600 px-3 py-2 rounded-xl text-[9px] font-black uppercase hover:bg-slate-200 transition-all">Done</button>
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             } else {
                 remSection.classList.add('hidden');
             }
@@ -839,7 +876,8 @@
             if (cb.checked) {
                 const id = cb.getAttribute('data-id');
                 const name = cb.getAttribute('data-name');
-                const phone = cb.getAttribute('data-phone');
+                const rawPhone = cb.getAttribute('data-phone');
+                const phone = sanitizeSMSPhone(rawPhone); // Clean and format selection on-the-fly
                 if (phone && phone !== 'N/A' && !seen.has(id)) {
                     seen.add(id);
                     selectedSMSList.push({ id, name, phone });
@@ -864,8 +902,9 @@
             selectedSMSList = [];
             snap.forEach(doc => {
                 const d = doc.data();
-                const mob = d['MOBILE'] || d['Mobile No'] || d['CELL #'] || '';
-                if (mob && mob !== 'N/A') {
+                const rawMob = d['MOBILE'] || d['Mobile No'] || d['CELL #'] || '';
+                const mob = sanitizeSMSPhone(rawMob); // Clean phone format
+                if (mob && mob !== 'N/A' && mob !== '') {
                     selectedSMSList.push({
                         id: doc.id,
                         name: d['STUDENT NAME'] || 'N/A',
@@ -886,12 +925,13 @@
     }
 
     function openSMSModalSingle(phone, name) {
-        if (!phone || phone === 'N/A' || phone.trim() === '') {
+        const cleanedPhone = sanitizeSMSPhone(phone);
+        if (!cleanedPhone || cleanedPhone === 'N/A' || cleanedPhone.trim() === '') {
             showToast("This student does not have a valid mobile number!", "bg-red-500");
             return;
         }
-        selectedSMSList = [{ id: 'single', name: name, phone: phone }];
-        document.getElementById('sms-recipients-list').innerText = `${name} (${phone})`;
+        selectedSMSList = [{ id: 'single', name: name, phone: cleanedPhone }];
+        document.getElementById('sms-recipients-list').innerText = `${name} (${cleanedPhone})`;
         document.getElementById('sms-message').value = '';
         document.getElementById('bulk-helper-info').classList.add('hidden');
         document.getElementById('sms-modal').classList.remove('hidden');
@@ -900,11 +940,17 @@
     }
 
     function openSMSModalMultiple() {
+        // Clean all list phone formats instantly
+        selectedSMSList = selectedSMSList.map(s => ({
+            ...s,
+            phone: sanitizeSMSPhone(s.phone)
+        })).filter(s => s.phone !== '');
+
         const listText = selectedSMSList.map(s => `${s.name} (${s.phone})`).join(', ');
         document.getElementById('sms-recipients-list').innerText = listText;
         document.getElementById('sms-message').value = '';
         
-        const rawNumbers = selectedSMSList.map(s => s.phone.trim()).filter(p => p).join(', ');
+        const rawNumbers = selectedSMSList.map(s => s.phone).join(', ');
         document.getElementById('bulk-numbers-copy').value = rawNumbers;
         document.getElementById('bulk-helper-info').classList.remove('hidden');
         
@@ -941,7 +987,7 @@
         }
 
         if (selectedSMSList.length === 1) {
-            const phone = selectedSMSList[0].phone.replace(/\s+/g, '');
+            const phone = sanitizeSMSPhone(selectedSMSList[0].phone); // Perfectly cleaned with leading '0'
             const smsUrl = `sms:${phone}?body=${msg}`;
             window.open(smsUrl, '_blank');
             showToast("Opening SMS App...", "bg-emerald-600");
@@ -949,7 +995,7 @@
         } else {
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
             const separator = isIOS ? ';' : ',';
-            const phones = selectedSMSList.map(s => s.phone.replace(/\s+/g, '')).join(separator);
+            const phones = selectedSMSList.map(s => sanitizeSMSPhone(s.phone)).join(separator); // Batch clean
             
             const smsUrl = `sms:${phones}?body=${msg}`;
             window.open(smsUrl, '_blank');
@@ -960,7 +1006,6 @@
 
     // On Load Initializations
     window.onload = function() {
-        // Initial setup for firestore load custom templates in background
         loadCustomTemplates();
     }
 </script>
