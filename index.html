@@ -551,7 +551,7 @@
                             </div>
                             <div class="grid grid-cols-3 gap-2 pt-4">
                                 <a href="tel:${mob}" class="bg-emerald-600 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-emerald-100 flex items-center justify-center">Call Now</a>
-                                <a href="https://wa.me/${wa.toString().replace(/\D/g,'')}" target="_blank" class="bg-slate-800 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase flex items-center justify-center">WhatsApp</a>
+                                <a href="https://wa.me/${wa.toString().replace(/\D/g,'').replace(/^0/, '92')}" target="_blank" class="bg-slate-800 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase flex items-center justify-center">WhatsApp</a>
                                 <button onclick="openSMSModalSingle('${mob}', '${(data['STUDENT NAME'] || '').replace(/'/g, "\\'")}')" class="bg-blue-600 hover:bg-blue-700 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase flex items-center justify-center shadow-lg shadow-blue-100">Send SMS</button>
                             </div>
                         </div>
