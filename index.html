@@ -86,25 +86,6 @@
                 </div>
             </div>
 
-            <!-- Filter Section -->
-            <div class="bg-white p-4 rounded-[20px] border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 items-center">
-                <div class="flex items-center gap-4 border-b md:border-b-0 md:border-r pb-3 md:pb-0 md:pr-4">
-                    <label class="flex items-center gap-2 text-[10px] font-black uppercase text-slate-700 cursor-pointer">
-                        <input type="radio" name="view-mode" value="all" checked onchange="toggleFilterMode('all')" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500"> All
-                    </label>
-                    <label class="flex items-center gap-2 text-[10px] font-black uppercase text-slate-700 cursor-pointer">
-                        <input type="radio" name="view-mode" value="class" onchange="toggleFilterMode('class')" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500"> Class Wise
-                    </label>
-                </div>
-                <select id="class-filter-dropdown" class="hidden text-[10px] font-black uppercase bg-slate-50 border p-2 rounded-lg outline-none w-full md:w-auto" onchange="performSearch()">
-                    <option value="">Select Class</option>
-                </select>
-                <div class="flex-1 flex gap-2 w-full">
-                    <input type="text" id="search-input" placeholder="Search by SR No or Name..." class="flex-1 p-3 pl-5 outline-none font-bold text-slate-800 uppercase text-sm border rounded-xl" onkeyup="if(event.key==='Enter') performSearch()" oninput="if(this.value.trim() === '') performSearch()">
-                    <button onclick="performSearch()" class="bg-slate-900 text-white px-6 py-3 rounded-[14px] font-black uppercase text-[10px] hover:bg-black transition-all">Search</button>
-                </div>
-            </div>
-
             <!-- Today's Call-Back Reminders Panel -->
             <div id="reminders-section" class="hidden bg-amber-50 border border-amber-200 p-5 rounded-3xl space-y-3 shadow-sm">
                 <div class="flex justify-between items-center">
@@ -117,6 +98,12 @@
                 <div id="reminders-list" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
                     <!-- Dynamic Reminders loaded via JS -->
                 </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="search-container flex gap-2">
+                <input type="text" id="search-input" placeholder="Search by SR No or Name..." class="flex-1 p-3 pl-5 outline-none font-bold text-slate-800 uppercase text-sm" onkeyup="if(event.key==='Enter') performSearch()" oninput="if(this.value.trim() === '') performSearch()">
+                <button onclick="performSearch()" class="bg-slate-900 text-white px-6 py-3 rounded-[14px] font-black uppercase text-[10px] hover:bg-black transition-all">Search</button>
             </div>
 
             <div id="results-area" class="space-y-6"></div>
@@ -186,6 +173,7 @@
                     </div>
                 </div>
                 
+                <!-- Sequential Sending Progress UI -->
                 <div id="bulk-sending-tracker" class="hidden p-4 bg-emerald-50 border border-emerald-100 rounded-2xl space-y-3">
                     <div class="flex justify-between items-center mb-1">
                         <span class="text-[9px] font-black text-emerald-800 uppercase tracking-widest">Progress Tracker</span>
@@ -194,6 +182,8 @@
                     <div class="w-full bg-slate-200 rounded-full h-1.5">
                         <div id="bulk-tracker-bar" class="bg-emerald-600 h-1.5 rounded-full" style="width: 0%"></div>
                     </div>
+                    
+                    <!-- Auto Sending Options -->
                     <div class="bg-white p-3 rounded-xl border border-emerald-100 flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <input type="checkbox" id="auto-send-checkbox" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer" onchange="toggleAutoSendMode()">
@@ -201,6 +191,7 @@
                         </div>
                         <span id="auto-countdown" class="hidden bg-red-100 text-red-600 text-[9px] font-black px-2 py-0.5 rounded-full">3s</span>
                     </div>
+                    
                     <p id="bulk-tracker-current" class="text-[9px] font-bold text-slate-500 mt-2 uppercase">Next up: N/A</p>
                 </div>
 
@@ -210,6 +201,8 @@
                         <button onclick="toggleCustomTemplateForm()" class="text-[8px] font-black text-blue-600 uppercase hover:underline">+ Save current as Template</button>
                     </div>
                     <textarea id="sms-message" placeholder="Type your SMS message here..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs font-bold h-32 outline-none focus:ring-2 focus:ring-blue-400" oninput="updateBulkInstructionCopy()"></textarea>
+                    
+                    <!-- Custom Template Save Field -->
                     <div id="tpl-save-container" class="hidden mt-2 p-3 bg-blue-50 border border-blue-100 rounded-xl space-y-2">
                         <p class="text-[8px] font-black text-blue-800 uppercase">Template Name</p>
                         <div class="flex gap-2">
@@ -221,18 +214,22 @@
                 </div>
                 <div>
                     <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Quick Templates</label>
-                    <div id="quick-templates-box" class="flex gap-1 flex-wrap mt-1"></div>
+                    <div id="quick-templates-box" class="flex gap-1 flex-wrap mt-1">
+                        <!-- Default templates and custom templates load dynamically here -->
+                    </div>
                 </div>
             </div>
             
             <div class="flex flex-col gap-2 mt-6">
                 <div class="flex gap-2">
                     <button onclick="closeSMSModal()" class="flex-1 bg-slate-100 text-slate-600 p-4 rounded-xl font-black uppercase text-[10px]">Cancel</button>
+                    <!-- Enhanced Master Send Button (Adapts to Bulk / Single) -->
                     <button id="main-sms-send-btn" onclick="executeSMSSending()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-xl font-black uppercase text-[10px] shadow-lg shadow-blue-100">Send Now</button>
                 </div>
+                
                 <div id="bulk-helper-info" class="hidden mt-2 p-3 bg-blue-50 border border-blue-100 rounded-xl text-[9px] text-blue-800 font-bold">
                     <p class="uppercase font-black">Bulk SMS Instructions:</p>
-                    <p class="mt-1">One-by-one mode prevents mobile phone from converting bulk list into MMS.</p>
+                    <p class="mt-1">One-by-one mode prevents mobile phone from converting bulk list into MMS. If you prefer to send using external software/devices, copy all numbers below:</p>
                     <textarea id="bulk-numbers-copy" readonly class="w-full mt-2 p-2 bg-white border border-blue-200 rounded text-xs select-all outline-none font-bold" onclick="this.select()"></textarea>
                 </div>
             </div>
@@ -241,6 +238,7 @@
 </div>
 
 <script>
+    // Firebase Setup
     const firebaseConfig = {
         apiKey: "AIzaSyBwkBy_EzDFx6Xd_U7pE6Ud-jC9uL3tKiE",
         authDomain: "theeducator-37df7.firebaseapp.com",
@@ -252,24 +250,40 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const appId = "theeducator-37df7";
+
     const getCol = (name) => db.collection('artifacts').doc(appId).collection('public').doc('data').collection(name);
-    
-    let currentMode = 'all';
+    let isEditMode = false;
+
+    // SMS Selection States
     let selectedSMSList = [];
     let customTemplates = [];
+    
+    // Multi-SMS Loop Queue States
     let bulkQueueIndex = 0;
     let isBulkLoopActive = false;
     let autoSendTimer = null;
     let countdownInterval = null;
 
+    // Helper: Clean and format Pakistani mobile number (Sirf digits, leading Zero se shuru ho)
     function sanitizeSMSPhone(phoneStr) {
         if (!phoneStr) return '';
+        // Sirf numbers rkhne ke liye
         let cleaned = phoneStr.toString().replace(/\D/g, '');
-        if (cleaned.startsWith('92')) cleaned = '0' + cleaned.substring(2);
-        if (cleaned.length === 10 && cleaned.startsWith('3')) cleaned = '0' + cleaned;
+        
+        // Agar 92 se shuru ho raha hai toh 92 ko hatakar 0 lagao
+        if (cleaned.startsWith('92')) {
+            cleaned = '0' + cleaned.substring(2);
+        }
+        
+        // Agar 0 missing hai aur 3 se shuru ho raha hai (e.g. 3001234567) toh 0 add karein
+        if (cleaned.length === 10 && cleaned.startsWith('3')) {
+            cleaned = '0' + cleaned;
+        }
+        
         return cleaned;
     }
 
+    // Login Logic
     function handleLogin() {
         const u = document.getElementById('username').value.trim().toLowerCase();
         const p = document.getElementById('password').value;
@@ -287,52 +301,75 @@
     }
 
     function handleLogout() { window.location.reload(); }
+
     function showToast(msg, color = 'bg-slate-800') {
         const t = document.getElementById('toast-msg');
-        t.innerText = msg; t.className = `toast ${color}`; t.style.display = 'block';
+        t.innerText = msg;
+        t.className = `toast ${color}`;
+        t.style.display = 'block';
         setTimeout(() => { t.style.display = 'none'; }, 3000);
     }
 
-    function toggleFilterMode(mode) {
-        currentMode = mode;
-        const dropdown = document.getElementById('class-filter-dropdown');
-        if(mode === 'class') {
-            dropdown.classList.remove('hidden');
-            populateClassDropdown();
-        } else {
-            dropdown.classList.add('hidden');
-            performSearch();
-        }
+    // Stats
+    async function updateCounts() {
+        try {
+            const today = new Date().toLocaleDateString();
+            const yest = new Date(); yest.setDate(yest.getDate() - 1);
+            const yesterdayStr = yest.toLocaleDateString();
+            const [c, l] = await Promise.all([getCol('contacts').get(), getCol('logs').get()]);
+            let todayCount = 0; let yesterdayCount = 0;
+            l.forEach(doc => {
+                const log = doc.data();
+                if(log.date === today) todayCount++;
+                if(log.date === yesterdayStr) yesterdayCount++;
+            });
+            document.getElementById('count-contacts').innerText = c.size;
+            document.getElementById('count-today').innerText = todayCount;
+            document.getElementById('count-yesterday').innerText = yesterdayCount;
+        } catch(e) {}
     }
 
-    async function populateClassDropdown() {
-        const dropdown = document.getElementById('class-filter-dropdown');
-        const snap = await getCol('contacts').get();
-        const classes = new Set();
-        snap.forEach(d => {
-            const c = d.data()['Class'];
-            if(c) classes.add(c);
-        });
-        dropdown.innerHTML = '<option value="">Select Class</option>';
-        Array.from(classes).sort().forEach(c => {
-            dropdown.innerHTML += `<option value="${c}">${c}</option>`;
-        });
-    }
-
+    // Search Logic with Multi-Select and Individual SMS buttons inside rows
     async function performSearch() {
         const term = document.getElementById('search-input').value.trim();
         const resultsArea = document.getElementById('results-area');
         
-        let query = getCol('contacts');
-        if (currentMode === 'class') {
-            const selectedClass = document.getElementById('class-filter-dropdown').value;
-            if (selectedClass) query = query.where('Class', '==', selectedClass);
-        }
-
         try {
             if (!term) {
-                const snap = await query.limit(1000).get();
-                renderTable(snap, resultsArea, `Recent Students ${currentMode === 'class' ? '(' + document.getElementById('class-filter-dropdown').value + ')' : ''}`);
+                const snap = await getCol('contacts').limit(1000).get();
+                let html = `<div class="list-container shadow-sm overflow-hidden">
+                    <div class="p-4 border-b bg-slate-50 flex justify-between items-center flex-wrap gap-2">
+                        <h3 class="text-[10px] font-black uppercase text-slate-400">Recent Students</h3>
+                        <div class="flex gap-2">
+                            <button onclick="triggerBulkSMS()" class="bg-blue-600 text-white text-[9px] font-black uppercase px-3 py-1.5 rounded-full hover:bg-blue-700 transition-all shadow-sm">Send SMS to Selected</button>
+                            <button onclick="triggerAllDatabaseSMS()" class="bg-amber-600 text-white text-[9px] font-black uppercase px-3 py-1.5 rounded-full hover:bg-amber-700 transition-all shadow-sm">Send SMS to ALL (Database)</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto"><table><thead><tr>
+                        <th class="w-10 text-center"><input type="checkbox" id="select-all-recent" class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500" onclick="toggleSelectAll('recent')"></th>
+                        <th>SR NO</th><th>Name</th><th>Father</th><th>Class/Sec</th><th>Contact Number</th><th>Family Code</th><th>Action</th></tr></thead><tbody>`;
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const rawMob = d['MOBILE'] || d['Mobile No'] || d['CELL #'] || '';
+                    const mob = sanitizeSMSPhone(rawMob); // Apply custom cleaning
+                    const safeName = (d['STUDENT NAME'] || '').replace(/'/g, "\\'");
+                    html += `<tr class="hover:bg-slate-50 cursor-pointer">
+                        <td class="text-center" onclick="event.stopPropagation();">
+                            <input type="checkbox" class="student-checkbox-recent w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer" data-id="${doc.id}" data-name="${d['STUDENT NAME'] || ''}" data-phone="${mob}" onclick="updateSelection()">
+                        </td>
+                        <td class="text-emerald-600 font-black" onclick="viewStudent('${doc.id}')">${doc.id}</td>
+                        <td class="uppercase" onclick="viewStudent('${doc.id}')">${d['STUDENT NAME'] || 'N/A'}</td>
+                        <td class="uppercase text-slate-500" onclick="viewStudent('${doc.id}')">${d['FATHER NAME'] || 'N/A'}</td>
+                        <td class="uppercase" onclick="viewStudent('${doc.id}')">${d['Class'] || 'N/A'} - ${d['Section'] || ''}</td>
+                        <td class="text-slate-700 font-bold" onclick="viewStudent('${doc.id}')">${mob || 'N/A'}</td>
+                        <td class="text-blue-600 font-bold" onclick="viewStudent('${doc.id}')">${d['search_family'] || 'N/A'}</td>
+                        <td class="p-2" onclick="event.stopPropagation();">
+                            <button onclick="openSMSModalSingle('${mob}', '${safeName}')" class="bg-blue-600 text-white font-black uppercase text-[9px] px-2.5 py-1.5 rounded-lg hover:bg-blue-700 transition-all shadow-sm">Send SMS</button>
+                        </td>
+                    </tr>`;
+                });
+                html += `</tbody></table></div></div>`;
+                resultsArea.innerHTML = html;
             } else {
                 resultsArea.innerHTML = `<div class="text-center py-20 font-black text-slate-300 animate-pulse text-xs uppercase tracking-widest">Searching...</div>`;
                 const docRef = await getCol('contacts').doc(term).get();
@@ -344,111 +381,813 @@
                         .where('STUDENT NAME', '<=', term.toUpperCase() + '\uf8ff')
                         .limit(100)
                         .get();
-                    if (nameQuery.empty) resultsArea.innerHTML = `<div class="text-center py-20 text-red-400 font-black uppercase text-xs">No result found for "${term}"</div>`;
-                    else renderTable(nameQuery, resultsArea, `Search Results for "${term}"`);
+                    if (nameQuery.empty) {
+                        resultsArea.innerHTML = `<div class="text-center py-20 text-red-400 font-black uppercase text-xs">No result found for "${term}"</div>`;
+                    } else if (nameQuery.size === 1) {
+                        const d = nameQuery.docs[0];
+                        await showDetailedView(d.id, d.data());
+                    } else {
+                        let html = `<div class="list-container shadow-sm overflow-hidden">
+                            <div class="p-4 border-b bg-slate-50 flex justify-between items-center flex-wrap gap-2">
+                                <h3 class="text-[10px] font-black uppercase text-slate-400">Search Results for "${term}"</h3>
+                                <div class="flex gap-2">
+                                    <button onclick="triggerBulkSMS()" class="bg-blue-600 text-white text-[9px] font-black uppercase px-3 py-1.5 rounded-full hover:bg-blue-700 transition-all shadow-sm">Send SMS to Selected</button>
+                                    <button onclick="triggerAllDatabaseSMS()" class="bg-amber-600 text-white text-[9px] font-black uppercase px-3 py-1.5 rounded-full hover:bg-amber-700 transition-all shadow-sm">Send SMS to ALL (Database)</button>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto"><table><thead><tr>
+                                <th class="w-10 text-center"><input type="checkbox" id="select-all-search" class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500" onclick="toggleSelectAll('search')"></th>
+                                <th>SR NO</th><th>Name</th><th>Father</th><th>Class/Sec</th><th>Contact Number</th><th>Action</th></tr></thead><tbody>`;
+                        nameQuery.forEach(doc => {
+                            const d = doc.data();
+                            const rawMob = d['MOBILE'] || d['Mobile No'] || d['CELL #'] || '';
+                            const mob = sanitizeSMSPhone(rawMob); // Clean phone
+                            const safeName = (d['STUDENT NAME'] || '').replace(/'/g, "\\'");
+                            html += `<tr class="hover:bg-slate-50">
+                                <td class="text-center">
+                                    <input type="checkbox" class="student-checkbox-search w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer" data-id="${doc.id}" data-name="${d['STUDENT NAME'] || ''}" data-phone="${mob}" onclick="updateSelection()">
+                                </td>
+                                <td class="text-emerald-600 font-black">${doc.id}</td>
+                                <td class="uppercase">${d['STUDENT NAME'] || 'N/A'}</td>
+                                <td class="uppercase text-slate-500">${d['FATHER NAME'] || 'N/A'}</td>
+                                <td class="uppercase">${d['Class'] || 'N/A'} - ${d['Section'] || ''}</td>
+                                <td class="text-slate-700 font-bold">${mob || 'N/A'}</td>
+                                <td class="flex gap-1 p-2">
+                                    <button onclick="viewStudent('${doc.id}')" class="bg-slate-800 text-white px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase">View</button>
+                                    <button onclick="openSMSModalSingle('${mob}', '${safeName}')" class="bg-blue-600 text-white px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase hover:bg-blue-700 transition-all shadow-sm">Send SMS</button>
+                                </td>
+                            </tr>`;
+                        });
+                        html += `</tbody></table></div></div>`;
+                        resultsArea.innerHTML = html;
+                    }
                 }
             }
-        } catch(e) { console.error(e); }
+        } catch (e) { resultsArea.innerHTML = `<div class="text-center py-20 text-red-500 font-black">Error occurred.</div>`; }
     }
 
-    function renderTable(snap, target, title) {
-        let html = `<div class="list-container shadow-sm overflow-hidden">
-            <div class="p-4 border-b bg-slate-50 flex justify-between items-center flex-wrap gap-2">
-                <h3 class="text-[10px] font-black uppercase text-slate-400">${title}</h3>
-                <div class="flex gap-2">
-                    <button onclick="triggerBulkSMS()" class="bg-blue-600 text-white text-[9px] font-black uppercase px-3 py-1.5 rounded-full hover:bg-blue-700 transition-all shadow-sm">Send SMS to Selected</button>
-                    <button onclick="triggerAllDatabaseSMS()" class="bg-amber-600 text-white text-[9px] font-black uppercase px-3 py-1.5 rounded-full hover:bg-amber-700 transition-all shadow-sm">Send SMS to Filtered</button>
-                </div>
+    async function showDetailedView(id, student) {
+        const resultsArea = document.getElementById('results-area');
+        const familyCode = (student['search_family'] || student['FMLY #'] || "").toString();
+        const logsSnap = await getCol('logs').where('student_id', '==', id).get();
+        const logs = logsSnap.docs.map(d => d.data()).sort((a,b) => b.timestamp - a.timestamp);
+        let others = [];
+        if (familyCode) {
+            const famSnap = await getCol('contacts').where('search_family', '==', familyCode).get();
+            famSnap.forEach(d => { if(d.id !== id) others.push({ id: d.id, ...d.data() }); });
+        }
+        resultsArea.innerHTML = renderDetailedCard(id, student, logs, others, familyCode);
+    }
+
+    function viewStudent(id) { document.getElementById('search-input').value = id; performSearch(); }
+
+    // Modals
+    function openAddModal() {
+        isEditMode = false;
+        document.getElementById('modal-title').innerText = "Add New Student";
+        document.getElementById('sr-field-container').classList.remove('hidden');
+        document.getElementById('edit-id').value = ''; document.getElementById('edit-sr').value = '';
+        document.getElementById('edit-name').value = ''; document.getElementById('edit-father').value = '';
+        document.getElementById('edit-class').value = ''; document.getElementById('edit-section').value = '';
+        document.getElementById('edit-mobile').value = ''; document.getElementById('edit-whatsapp').value = '';
+        document.getElementById('edit-fml').value = ''; document.getElementById('dup-warning').classList.add('hidden');
+        document.getElementById('student-modal').classList.remove('hidden');
+    }
+
+    function openEditModal(id, currentData) {
+        isEditMode = true;
+        document.getElementById('modal-title').innerText = "Edit Student Profile";
+        document.getElementById('sr-field-container').classList.add('hidden');
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-name').value = currentData['STUDENT NAME'] || '';
+        document.getElementById('edit-father').value = currentData['FATHER NAME'] || '';
+        document.getElementById('edit-class').value = currentData['Class'] || '';
+        document.getElementById('edit-section').value = currentData['Section'] || '';
+        document.getElementById('edit-mobile').value = currentData['MOBILE'] || currentData['Mobile No'] || '';
+        document.getElementById('edit-whatsapp').value = currentData['WHATSAPP'] || '';
+        document.getElementById('edit-fml').value = currentData['search_family'] || '';
+        document.getElementById('student-modal').classList.remove('hidden');
+    }
+
+    function closeModal() { document.getElementById('student-modal').classList.add('hidden'); }
+
+    async function saveStudent() {
+        const srNo = document.getElementById('edit-sr').value.trim();
+        const studentId = isEditMode ? document.getElementById('edit-id').value : srNo;
+        if (!studentId) { showToast("SR No is required", "bg-amber-600"); return; }
+        const payload = {
+            'STUDENT NAME': document.getElementById('edit-name').value.trim().toUpperCase(),
+            'FATHER NAME': document.getElementById('edit-father').value.trim().toUpperCase(),
+            'Class': document.getElementById('edit-class').value.trim().toUpperCase(),
+            'Section': document.getElementById('edit-section').value.trim().toUpperCase(),
+            'MOBILE': sanitizeSMSPhone(document.getElementById('edit-mobile').value.trim()), // Format clean mobile before saving
+            'WHATSAPP': sanitizeSMSPhone(document.getElementById('edit-whatsapp').value.trim()),
+            'search_family': document.getElementById('edit-fml').value.trim(),
+        };
+        try {
+            const btn = document.getElementById('save-btn');
+            btn.innerText = "Processing..."; btn.disabled = true;
+            if (!isEditMode) {
+                const check = await getCol('contacts').doc(studentId).get();
+                if (check.exists) {
+                    document.getElementById('dup-warning').classList.remove('hidden');
+                    btn.innerText = "Save Details"; btn.disabled = false; return;
+                }
+                await getCol('contacts').doc(studentId).set(payload);
+                showToast("Student Added Successfully", "bg-emerald-600");
+            } else {
+                await getCol('contacts').doc(studentId).update(payload);
+                showToast("Profile Updated", "bg-blue-600");
+            }
+            closeModal(); performSearch(); updateCounts();
+            btn.innerText = "Save Details"; btn.disabled = false;
+        } catch(e) { showToast("Error Saving Data", "bg-red-500"); }
+    }
+
+    function renderDetailedCard(id, data, logs, family, fCode) {
+        const rawMob = data['MOBILE'] || data['Mobile No'] || data['CELL #'] || '';
+        const mob = sanitizeSMSPhone(rawMob) || 'N/A';
+        const wa = sanitizeSMSPhone(data['WHATSAPP'] || mob);
+        let logsHtml = logs.slice(0, 3).map(l => `
+            <div class="history-item">
+                <p class="text-[7px] font-black text-emerald-600 uppercase">${l.date} ${l.time}</p>
+                <p class="text-[10px] font-bold text-slate-600">"${l.remark}"</p>
             </div>
-            <div class="overflow-x-auto"><table><thead><tr>
-                <th class="w-10 text-center"><input type="checkbox" id="select-all" class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500" onclick="toggleSelectAll()"></th>
-                <th>SR NO</th><th>Name</th><th>Father</th><th>Class/Sec</th><th>Contact Number</th><th>Action</th></tr></thead><tbody>`;
-        snap.forEach(doc => {
-            const d = doc.data();
-            const mob = sanitizeSMSPhone(d['MOBILE'] || d['Mobile No'] || '');
-            const safeName = (d['STUDENT NAME'] || '').replace(/'/g, "\\'");
-            html += `<tr class="hover:bg-slate-50">
-                <td class="text-center"><input type="checkbox" class="student-checkbox w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded cursor-pointer" data-id="${doc.id}" data-name="${d['STUDENT NAME'] || ''}" data-phone="${mob}" onclick="updateSelection()"></td>
-                <td class="text-emerald-600 font-black" onclick="viewStudent('${doc.id}')">${doc.id}</td>
-                <td class="uppercase" onclick="viewStudent('${doc.id}')">${d['STUDENT NAME'] || 'N/A'}</td>
-                <td class="uppercase text-slate-500" onclick="viewStudent('${doc.id}')">${d['FATHER NAME'] || 'N/A'}</td>
-                <td class="uppercase" onclick="viewStudent('${doc.id}')">${d['Class'] || 'N/A'} - ${d['Section'] || ''}</td>
-                <td class="text-slate-700 font-bold" onclick="viewStudent('${doc.id}')">${mob || 'N/A'}</td>
-                <td><button onclick="openSMSModalSingle('${mob}', '${safeName}')" class="bg-blue-600 text-white font-black uppercase text-[9px] px-2 py-1 rounded hover:bg-blue-700">SMS</button></td>
-            </tr>`;
-        });
-        html += `</tbody></table></div></div>`;
-        target.innerHTML = html;
+        `).join('');
+        let familyHtml = family.map(m => {
+            const rawFamMob = m['MOBILE'] || m['Mobile No'] || m['CELL #'] || '';
+            const famMob = sanitizeSMSPhone(rawFamMob) || 'N/A';
+            return `
+                <tr class="hover:bg-slate-50 cursor-pointer" onclick="viewStudent('${m.id}')">
+                    <td class="font-bold text-blue-600">${m.id}</td>
+                    <td class="uppercase">${m['STUDENT NAME'] || 'N/A'}</td>
+                    <td class="uppercase text-slate-500">${m['FATHER NAME'] || 'N/A'}</td>
+                    <td class="uppercase text-xs">${m['Class'] || 'N/A'} - ${m['Section'] || ''}</td>
+                    <td class="font-bold">${famMob}</td>
+                </tr>
+            `;
+        }).join('');
+        return `
+            <div class="space-y-6">
+                <div class="info-card overflow-hidden">
+                    <div class="bg-slate-900 p-6 flex justify-between items-center text-white">
+                        <div>
+                            <p class="text-[9px] font-black opacity-50 uppercase tracking-widest">Student Profile</p>
+                            <h2 class="text-xl font-black uppercase tracking-tight">${data['STUDENT NAME'] || 'N/A'}</h2>
+                            <p class="text-xs font-bold text-emerald-400 mt-1 uppercase italic">${data['FATHER NAME'] || 'N/A'}</p>
+                        </div>
+                        <div class="flex flex-col items-end gap-2">
+                            <span class="bg-emerald-600 text-white text-xs font-black px-4 py-2 rounded-xl">ID: ${id}</span>
+                            <button onclick='openEditModal("${id}", ${JSON.stringify(data).replace(/'/g, "&apos;")})' class="text-[9px] font-black uppercase text-slate-400 border border-slate-700 px-3 py-1 rounded-lg hover:bg-slate-800 transition-all">Edit Info</button>
+                        </div>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><p class="detail-label">Class</p><p class="detail-value">${data['Class'] || 'N/A'}</p></div>
+                                <div><p class="detail-label">Section</p><p class="detail-value">${data['Section'] || 'N/A'}</p></div>
+                                <div><p class="detail-label">Mobile</p><p class="detail-value">${mob}</p></div>
+                                <div><p class="detail-label">WhatsApp</p><p class="detail-value">${wa}</p></div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 pt-4">
+                                <a href="tel:${mob}" class="bg-emerald-600 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-emerald-100 flex items-center justify-center">Call Now</a>
+                                <a href="https://wa.me/${wa.toString().replace(/\D/g,'').replace(/^0/, '92')}" target="_blank" class="bg-slate-800 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase flex items-center justify-center">WhatsApp</a>
+                                <button onclick="openSMSModalSingle('${mob}', '${(data['STUDENT NAME'] || '').replace(/'/g, "\\'")}')" class="bg-blue-600 hover:bg-blue-700 text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase flex items-center justify-center shadow-lg shadow-blue-100">Send SMS</button>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 p-5 rounded-[2rem] border border-slate-100">
+                            <p class="text-[9px] font-black text-slate-400 uppercase mb-3 tracking-widest">Call Remarks</p>
+                            <textarea id="rem-${id}" placeholder="Type summary..." class="w-full bg-white border border-slate-200 rounded-2xl p-4 text-xs font-bold h-24 outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                            <div class="flex items-center gap-2 mt-2 mb-1 pl-1">
+                                <input type="checkbox" id="rem-tomorrow-${id}" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer">
+                                <label for="rem-tomorrow-${id}" class="text-[10px] font-black text-slate-500 uppercase cursor-pointer select-none">Schedule Call Reminder for Tomorrow</label>
+                            </div>
+                            <button onclick="saveRemark('${id}', '${(data['STUDENT NAME'] || '').replace(/'/g, "\\'")}', '${mob}', '${data['Class'] || 'N/A'} - ${data['Section'] || ''}')" id="btn-${id}" class="w-full bg-blue-600 text-white py-4 mt-3 rounded-2xl font-black uppercase text-[10px] shadow-xl shadow-blue-100">Submit Record</button>
+                        </div>
+                    </div>
+                    <div class="px-6 pb-6 border-t pt-4">
+                        <p class="text-[9px] font-black text-slate-400 uppercase mb-3">Recent Logs</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">${logsHtml || '<p class="text-[10px] text-slate-400">No logs.</p>'}</div>
+                    </div>
+                </div>
+                <div class="list-container shadow-md">
+                    <div class="bg-blue-50 p-4 border-b border-blue-100"><h3 class="text-[10px] font-black uppercase text-blue-800">Siblings / Family</h3></div>
+                    <div class="overflow-x-auto"><table><thead><tr><th>ID</th><th>Name</th><th>Father</th><th>Class/Sec</th><th>Contact</th></tr></thead><tbody>${familyHtml || '<tr><td colspan="5" class="text-center py-6 text-slate-300">No Siblings.</td></tr>'}</tbody></table></div>
+                </div>
+            </div>`;
     }
 
-    function toggleSelectAll() {
-        const checked = document.getElementById('select-all').checked;
-        document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = checked);
+    async function saveRemark(sid, studentName = '', phone = '', classSec = '') {
+        const text = document.getElementById(`rem-${sid}`).value.trim();
+        const scheduleCheck = document.getElementById(`rem-tomorrow-${sid}`)?.checked;
+        const btn = document.getElementById(`btn-${sid}`);
+        if (!text) return;
+        const now = new Date();
+        try {
+            btn.innerText = "Saving..."; btn.disabled = true;
+            await getCol('logs').add({ student_id: sid, remark: text, date: now.toLocaleDateString(), time: now.toLocaleTimeString(), timestamp: now.getTime() });
+            
+            if (scheduleCheck) {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const tomorrowStr = tomorrow.toLocaleDateString();
+                await getCol('reminders').add({
+                    student_id: sid,
+                    student_name: studentName,
+                    phone: sanitizeSMSPhone(phone), // Clean reminder phone number
+                    class_sec: classSec,
+                    scheduled_date: tomorrowStr,
+                    status: 'pending',
+                    timestamp: now.getTime()
+                });
+            }
+            
+            btn.innerText = "Saved!";
+            setTimeout(() => { performSearch(); updateCounts(); loadReminders(); }, 800);
+        } catch(e) { btn.innerText = "Error"; btn.disabled = false; }
+    }
+
+    // Import/Export
+    async function handleImport(e, colName) {
+        const file = e.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            const wb = XLSX.read(evt.target.result, { type: 'binary' });
+            const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+            const col = getCol(colName);
+            let added = 0;
+            showToast("Importing...", "bg-blue-500");
+            for(let i=0; i<data.length; i+=50) {
+                const batch = db.batch(); const chunk = data.slice(i, i+50);
+                for(const item of chunk) {
+                    const id = (item['ID No.'] || item['SR. NO.'] || item['Student ID'] || item['ID NO'] || '').toString().trim();
+                    const fCode = (item['Fmly Code'] || item['FMLY #'] || item['Family Code'] || '').toString().trim();
+                    if(id) {
+                        const docRef = col.doc(id);
+                        const existing = await docRef.get();
+                        if(!existing.exists) { 
+                            const cleanedItem = {};
+                            for (const key in item) {
+                                if (typeof item[key] === 'string') {
+                                    cleanedItem[key] = item[key].toUpperCase();
+                                } else {
+                                    cleanedItem[key] = item[key];
+                                }
+                            }
+                            
+                            // Format clean phone fields on import
+                            if (cleanedItem['MOBILE']) cleanedItem['MOBILE'] = sanitizeSMSPhone(cleanedItem['MOBILE']);
+                            if (cleanedItem['Mobile No']) cleanedItem['Mobile No'] = sanitizeSMSPhone(cleanedItem['Mobile No']);
+                            if (cleanedItem['CELL #']) cleanedItem['CELL #'] = sanitizeSMSPhone(cleanedItem['CELL #']);
+
+                            batch.set(docRef, { ...cleanedItem, search_family: fCode }); added++; 
+                        }
+                    }
+                }
+                await batch.commit();
+            }
+            showToast(`Done: ${added} Added`, "bg-emerald-600"); updateCounts(); performSearch();
+        };
+        reader.readAsBinaryString(file);
+    }
+    document.getElementById('file-contacts').addEventListener('change', (e) => handleImport(e, 'contacts'));
+
+    async function downloadBackup() {
+        try {
+            const [cSnap, lSnap] = await Promise.all([getCol('contacts').get(), getCol('logs').get()]);
+            const students = cSnap.docs.map(d => ({ "SR NO": d.id, ...d.data() }));
+            const logs = lSnap.docs.map(d => d.data());
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(students), "Students");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(logs), "Logs");
+            XLSX.writeFile(wb, `Backup_${new Date().toISOString().slice(0,10)}.xlsx`);
+        } catch(e) { alert("Backup error"); }
+    }
+
+    async function downloadReport(format) {
+        try {
+            showToast("Generating...", "bg-blue-500");
+            const [lSnap, cSnap] = await Promise.all([getCol('logs').get(), getCol('contacts').get()]);
+            const sMap = new Map(); const famGroups = new Map();
+            cSnap.forEach(d => {
+                const data = d.data(); const id = d.id;
+                const fCode = (data['search_family'] || data['FMLY #'] || "").toString();
+                sMap.set(id, { ...data, id });
+                if (fCode) {
+                    if (!famGroups.has(fCode)) famGroups.set(fCode, []);
+                    famGroups.get(fCode).push(data['STUDENT NAME'] || 'N/A');
+                }
+            });
+
+            // Sorting logs by timestamp DESC (Latest First)
+            const sortedLogs = lSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            const rows = sortedLogs.map(l => {
+                const s = sMap.get(l.student_id) || {};
+                const fCode = (s['search_family'] || s['FMLY #'] || "").toString();
+                const familyNames = fCode && famGroups.has(fCode) ? famGroups.get(fCode).join(', ') : 'N/A';
+                const mob = sanitizeSMSPhone(s['MOBILE'] || s['Mobile No'] || 'N/A');
+                return { 
+                    "Date": l.date || 'N/A', 
+                    "Time": l.time || 'N/A', 
+                    "SR NO": l.student_id || 'N/A', 
+                    "Student": s['STUDENT NAME'] || 'N/A', 
+                    "Mobile": mob, 
+                    "Family": familyNames, 
+                    "Remarks": l.remark || 'N/A' 
+                };
+            });
+
+            if (format === 'excel') {
+                const ws = XLSX.utils.json_to_sheet(rows);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Call Logs");
+                XLSX.writeFile(wb, `Call_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+            } else {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('l', 'pt', 'a4');
+                doc.setFontSize(18);
+                doc.text("The Educators - Call Logs Report (Latest First)", 40, 40);
+                doc.setFontSize(10);
+                doc.text(`Generated on: ${new Date().toLocaleString()}`, 40, 60);
+                
+                doc.autoTable({ 
+                    head: [["Date", "Time", "SR NO", "Student", "Mobile", "Family Info", "Remarks"]], 
+                    body: rows.map(r => [r.Date, r.Time, r["SR NO"], r.Student, r.Mobile, r.Family, r.Remarks]), 
+                    startY: 80, 
+                    styles: { fontSize: 8, cellPadding: 5 },
+                    headStyles: { fillColor: [16, 185, 129] },
+                    alternateRowStyles: { fillColor: [245, 247, 250] },
+                    columnStyles: {
+                        6: { cellWidth: 200 } // Remarks column width
+                    }
+                });
+                doc.save(`Call_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+            }
+            showToast("Report Downloaded", "bg-emerald-600");
+        } catch(e) { 
+            console.error(e); 
+            showToast("Report Error", "bg-red-500");
+        }
+    }
+
+    async function loadReminders() {
+        try {
+            const todayStr = new Date().toLocaleDateString();
+            const remindersSnap = await getCol('reminders').get();
+            const activeReminders = [];
+            remindersSnap.forEach(doc => {
+                const r = doc.data();
+                if (r.scheduled_date === todayStr && r.status !== 'done') {
+                    activeReminders.push({ id: doc.id, ...r });
+                }
+            });
+
+            const remSection = document.getElementById('reminders-section');
+            const remList = document.getElementById('reminders-list');
+            const remCount = document.getElementById('reminder-count');
+
+            if (activeReminders.length > 0) {
+                remSection.classList.remove('hidden');
+                remCount.innerText = activeReminders.length;
+                remList.innerHTML = activeReminders.map(r => {
+                    const cleanPhone = sanitizeSMSPhone(r.phone);
+                    return `
+                        <div class="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm flex justify-between items-center gap-3">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[8px] font-black text-amber-600 uppercase">ID: ${r.student_id} | ${r.class_sec}</p>
+                                <p class="text-xs font-black uppercase text-slate-800 truncate">${r.student_name}</p>
+                                <p class="text-[10px] font-bold text-slate-500">${cleanPhone}</p>
+                            </div>
+                            <div class="flex gap-1 shrink-0">
+                                <a href="tel:${cleanPhone}" onclick="markReminderDone('${r.id}')" class="bg-emerald-600 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase hover:bg-emerald-700 transition-all shadow-sm">Call</a>
+                                <button onclick="markReminderDone('${r.id}')" class="bg-slate-100 text-slate-600 px-3 py-2 rounded-xl text-[9px] font-black uppercase hover:bg-slate-200 transition-all">Done</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                remSection.classList.add('hidden');
+            }
+        } catch(e) {
+            console.error("Error loading reminders:", e);
+        }
+    }
+
+    async function markReminderDone(reminderId) {
+        try {
+            await getCol('reminders').doc(reminderId).update({ status: 'done' });
+            showToast("Reminder cleared!", "bg-emerald-600");
+            loadReminders();
+        } catch(e) {
+            showToast("Error updating reminder", "bg-red-500");
+        }
+    }
+
+    // Load Custom Templates from Firebase Firestore
+    async function loadCustomTemplates() {
+        try {
+            const snap = await getCol('sms_templates').orderBy('timestamp', 'asc').get().catch(() => getCol('sms_templates').get());
+            customTemplates = [];
+            snap.forEach(doc => {
+                customTemplates.push({ id: doc.id, ...doc.data() });
+            });
+            renderTemplatesUI();
+        } catch (e) {
+            console.error("Templates loading error:", e);
+            renderTemplatesUI(); // Fallback to just default templates
+        }
+    }
+
+    // Render templates (Default + Custom Templates) in SMS Panel
+    function renderTemplatesUI() {
+        const container = document.getElementById('quick-templates-box');
+        
+        // Default static templates
+        let html = `
+            <button onclick="setSMSTemplate('absent')" class="text-[8px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded font-bold uppercase">Absent Alert</button>
+            <button onclick="setSMSTemplate('fee')" class="text-[8px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded font-bold uppercase">Fee Reminder</button>
+            <button onclick="setSMSTemplate('general')" class="text-[8px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded font-bold uppercase">General Meeting</button>
+        `;
+        
+        // Dynamically append custom templates with delete icons
+        customTemplates.forEach(t => {
+            const escapedBody = t.body.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
+            html += `
+                <div class="inline-flex items-center bg-blue-50 text-blue-700 rounded overflow-hidden border border-blue-100">
+                    <button onclick="setDirectSMSTemplate('${escapedBody}')" class="text-[8px] hover:bg-blue-100 px-2 py-1 font-bold uppercase">${t.name}</button>
+                    <button onclick="deleteCustomTemplate('${t.id}')" class="text-[8px] px-1.5 py-1 hover:bg-red-100 text-red-500 font-bold border-l border-blue-100" title="Delete Template">✕</button>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    // Toggle Custom Template Inline Form
+    function toggleCustomTemplateForm(show = true) {
+        const container = document.getElementById('tpl-save-container');
+        if (show) {
+            const currentMsg = document.getElementById('sms-message').value.trim();
+            if (!currentMsg) {
+                showToast("Pehle Message Box me template body likhein!", "bg-amber-600");
+                return;
+            }
+            container.classList.remove('hidden');
+            document.getElementById('new-tpl-name').focus();
+        } else {
+            container.classList.add('hidden');
+            document.getElementById('new-tpl-name').value = '';
+        }
+    }
+
+    // Save current textarea message as template in Firestore
+    async function saveCurrentMessageAsTemplate() {
+        const nameInput = document.getElementById('new-tpl-name');
+        const name = nameInput.value.trim().toUpperCase();
+        const body = document.getElementById('sms-message').value.trim();
+        
+        if (!name) {
+            showToast("Template ka koi name likhein!", "bg-amber-600");
+            return;
+        }
+        if (!body) {
+            showToast("Message body empty nahi ho sakti!", "bg-amber-600");
+            return;
+        }
+        
+        try {
+            await getCol('sms_templates').add({
+                name: name,
+                body: body,
+                timestamp: Date.now()
+            });
+            showToast("Template saved successfully!", "bg-emerald-600");
+            toggleCustomTemplateForm(false);
+            await loadCustomTemplates();
+        } catch (e) {
+            console.error("Error saving template:", e);
+            showToast("Template save karne me error aya!", "bg-red-500");
+        }
+    }
+
+    // Delete custom template from Firestore
+    async function deleteCustomTemplate(id) {
+        if (!confirm("Kya aap waqai is template ko delete karna chahte hain?")) return;
+        try {
+            await getCol('sms_templates').doc(id).delete();
+            showToast("Template deleted successfully!", "bg-emerald-600");
+            await loadCustomTemplates();
+        } catch (e) {
+            console.error("Error deleting template:", e);
+            showToast("Template delete karne me error aya!", "bg-red-500");
+        }
+    }
+
+    // Set custom template directly into textarea
+    function setDirectSMSTemplate(body) {
+        document.getElementById('sms-message').value = body;
+        updateBulkInstructionCopy();
+    }
+
+    // SMS Core Functions
+    function toggleSelectAll(type) {
+        const selectAllCheck = document.getElementById(`select-all-${type}`);
+        const checkboxes = document.querySelectorAll(`.student-checkbox-${type}`);
+        checkboxes.forEach(cb => {
+            cb.checked = selectAllCheck.checked;
+        });
         updateSelection();
     }
 
+    // Selection processing logic
     function updateSelection() {
         selectedSMSList = [];
-        document.querySelectorAll('.student-checkbox:checked').forEach(cb => {
-            selectedSMSList.push({ id: cb.getAttribute('data-id'), name: cb.getAttribute('data-name'), phone: cb.getAttribute('data-phone') });
+        const checkboxes = document.querySelectorAll('.student-checkbox-recent, .student-checkbox-search');
+        const seen = new Set();
+        checkboxes.forEach(cb => {
+            if (cb.checked) {
+                const id = cb.getAttribute('data-id');
+                const name = cb.getAttribute('data-name');
+                const rawPhone = cb.getAttribute('data-phone');
+                const phone = sanitizeSMSPhone(rawPhone); // Clean and format selection on-the-fly
+                if (phone && phone !== 'N/A' && !seen.has(id)) {
+                    seen.add(id);
+                    selectedSMSList.push({ id, name, phone });
+                }
+            }
         });
-    }
-
-    async function triggerAllDatabaseSMS() {
-        let query = getCol('contacts');
-        if (currentMode === 'class') {
-            const selectedClass = document.getElementById('class-filter-dropdown').value;
-            if (selectedClass) query = query.where('Class', '==', selectedClass);
-        }
-        const snap = await query.get();
-        selectedSMSList = [];
-        snap.forEach(doc => {
-            const d = doc.data();
-            const mob = sanitizeSMSPhone(d['MOBILE'] || d['Mobile No'] || '');
-            if (mob) selectedSMSList.push({ id: doc.id, name: d['STUDENT NAME'] || 'N/A', phone: mob });
-        });
-        if (selectedSMSList.length === 0) showToast("No contacts found!", "bg-red-500");
-        else openSMSModalMultiple();
     }
 
     function triggerBulkSMS() {
         updateSelection();
-        if (selectedSMSList.length === 0) showToast("Select at least one", "bg-amber-600");
-        else openSMSModalMultiple();
+        if (selectedSMSList.length === 0) {
+            showToast("Please select at least one student with a mobile number!", "bg-amber-600");
+            return;
+        }
+        openSMSModalMultiple();
+    }
+
+    async function triggerAllDatabaseSMS() {
+        showToast("Fetching all database contacts...", "bg-blue-500");
+        try {
+            const snap = await getCol('contacts').get();
+            selectedSMSList = [];
+            snap.forEach(doc => {
+                const d = doc.data();
+                const rawMob = d['MOBILE'] || d['Mobile No'] || d['CELL #'] || '';
+                const mob = sanitizeSMSPhone(rawMob); // Clean phone format
+                if (mob && mob !== 'N/A' && mob !== '') {
+                    selectedSMSList.push({
+                        id: doc.id,
+                        name: d['STUDENT NAME'] || 'N/A',
+                        phone: mob
+                    });
+                }
+            });
+            if (selectedSMSList.length === 0) {
+                showToast("No database contacts with valid numbers found!", "bg-amber-600");
+                return;
+            }
+            showToast(`${selectedSMSList.length} Contacts loaded successfully!`, "bg-emerald-600");
+            openSMSModalMultiple();
+        } catch (e) {
+            showToast("Failed to fetch database contacts.", "bg-red-500");
+            console.error(e);
+        }
     }
 
     function openSMSModalSingle(phone, name) {
-        selectedSMSList = [{ id: 'single', name: name, phone: phone }];
-        document.getElementById('sms-recipients-list').innerText = `${name} (${phone})`;
+        const cleanedPhone = sanitizeSMSPhone(phone);
+        if (!cleanedPhone || cleanedPhone === 'N/A' || cleanedPhone.trim() === '') {
+            showToast("This student does not have a valid mobile number!", "bg-red-500");
+            return;
+        }
+        selectedSMSList = [{ id: 'single', name: name, phone: cleanedPhone }];
+        
+        // Reset bulk loop states
+        isBulkLoopActive = false;
+        bulkQueueIndex = 0;
+        clearAutoSendTimers();
+        
+        // UI Reset
+        document.getElementById('bulk-sending-tracker').classList.add('hidden');
+        document.getElementById('sms-recipients-list').innerText = `${name} (${cleanedPhone})`;
+        document.getElementById('sms-message').value = '';
+        document.getElementById('bulk-helper-info').classList.add('hidden');
+        document.getElementById('main-sms-send-btn').innerText = "Send Now";
         document.getElementById('sms-modal').classList.remove('hidden');
+        toggleCustomTemplateForm(false);
+        renderTemplatesUI();
     }
 
     function openSMSModalMultiple() {
-        document.getElementById('sms-recipients-list').innerText = selectedSMSList.map(s => s.name).join(', ');
+        // Clean all list phone formats instantly
+        selectedSMSList = selectedSMSList.map(s => ({
+            ...s,
+            phone: sanitizeSMSPhone(s.phone)
+        })).filter(s => s.phone !== '');
+
+        // Reset bulk states & target index
+        isBulkLoopActive = selectedSMSList.length > 1;
+        bulkQueueIndex = 0;
+        clearAutoSendTimers();
+
+        const listText = selectedSMSList.map(s => `${s.name} (${s.phone})`).join(', ');
+        document.getElementById('sms-recipients-list').innerText = listText;
+        document.getElementById('sms-message').value = '';
+        
+        // Reset checkboxes inside auto-send UI
+        document.getElementById('auto-send-checkbox').checked = false;
+        document.getElementById('auto-countdown').classList.add('hidden');
+
+        // Update tracker UI for bulk loop
+        if (isBulkLoopActive) {
+            document.getElementById('bulk-sending-tracker').classList.remove('hidden');
+            updateBulkTrackerUI();
+            document.getElementById('main-sms-send-btn').innerText = "Start Sending (1 by 1)";
+        } else {
+            document.getElementById('bulk-sending-tracker').classList.add('hidden');
+            document.getElementById('main-sms-send-btn').innerText = "Send Now";
+        }
+        
+        // Update helper copy textarea
+        updateBulkInstructionCopy();
+        
+        document.getElementById('bulk-helper-info').classList.remove('hidden');
         document.getElementById('sms-modal').classList.remove('hidden');
+        toggleCustomTemplateForm(false);
+        renderTemplatesUI();
     }
 
-    function closeSMSModal() { document.getElementById('sms-modal').classList.add('hidden'); }
+    // Helper: dynamic copy generator with customized messages
+    function updateBulkInstructionCopy() {
+        const msg = document.getElementById('sms-message').value.trim();
+        const copyArea = document.getElementById('bulk-numbers-copy');
+        if (selectedSMSList.length > 0) {
+            // Numbers comma separated for external apps
+            const rawNumbers = selectedSMSList.map(s => s.phone).join(', ');
+            copyArea.value = rawNumbers;
+        }
+    }
 
+    function updateBulkTrackerUI() {
+        const total = selectedSMSList.length;
+        const currentNum = bulkQueueIndex + 1;
+        
+        if (bulkQueueIndex < total) {
+            const currentStudent = selectedSMSList[bulkQueueIndex];
+            document.getElementById('bulk-tracker-text').innerText = `${bulkQueueIndex} of ${total} Sent`;
+            document.getElementById('bulk-tracker-current').innerText = `Next: ${currentStudent.name} (${currentStudent.phone})`;
+            
+            const pct = (bulkQueueIndex / total) * 100;
+            document.getElementById('bulk-tracker-bar').style.width = `${pct}%`;
+            
+            // Adjust send button state dynamically
+            const autoActive = document.getElementById('auto-send-checkbox').checked;
+            if (autoActive && bulkQueueIndex > 0) {
+                document.getElementById('main-sms-send-btn').innerText = "Auto-sending in progress...";
+            } else {
+                document.getElementById('main-sms-send-btn').innerText = bulkQueueIndex === 0 ? "Start Sending" : `Send to Student ${currentNum} of ${total}`;
+            }
+        } else {
+            document.getElementById('bulk-tracker-text').innerText = `${total} of ${total} Completed!`;
+            document.getElementById('bulk-tracker-current').innerText = "All Selected SMS opened successfully!";
+            document.getElementById('bulk-tracker-bar').style.width = "100%";
+            document.getElementById('main-sms-send-btn').innerText = "All Sent! Close Panel";
+            clearAutoSendTimers();
+        }
+    }
+
+    // Stop and clear automated sequential delays safely
+    function clearAutoSendTimers() {
+        if (autoSendTimer) {
+            clearTimeout(autoSendTimer);
+            autoSendTimer = null;
+        }
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+        }
+        const badge = document.getElementById('auto-countdown');
+        if (badge) badge.classList.add('hidden');
+    }
+
+    // Handle auto-send checkbox toggle manually
+    function toggleAutoSendMode() {
+        const isChecked = document.getElementById('auto-send-checkbox').checked;
+        if (!isChecked) {
+            clearAutoSendTimers();
+            updateBulkTrackerUI();
+        } else {
+            if (bulkQueueIndex > 0 && bulkQueueIndex < selectedSMSList.length) {
+                startAutoSendTimer();
+            }
+        }
+    }
+
+    function startAutoSendTimer() {
+        clearAutoSendTimers();
+        
+        const badge = document.getElementById('auto-countdown');
+        badge.classList.remove('hidden');
+        let timeLeft = 3;
+        badge.innerText = `${timeLeft}s`;
+        
+        // Visual countdown
+        countdownInterval = setInterval(() => {
+            timeLeft--;
+            badge.innerText = `${timeLeft}s`;
+            if (timeLeft <= 0) {
+                clearInterval(countdownInterval);
+            }
+        }, 1000);
+
+        // Actual automated trigger after 3 seconds
+        autoSendTimer = setTimeout(() => {
+            badge.classList.add('hidden');
+            executeSMSSending();
+        }, 3000);
+    }
+
+    function closeSMSModal() {
+        document.getElementById('sms-modal').classList.add('hidden');
+        isBulkLoopActive = false;
+        bulkQueueIndex = 0;
+        clearAutoSendTimers();
+    }
+
+    function setSMSTemplate(type) {
+        const msgArea = document.getElementById('sms-message');
+        if (type === 'absent') {
+            msgArea.value = "Dear Parent, your child was absent from school today. Please contact the school office. - The Educators";
+        } else if (type === 'fee') {
+            msgArea.value = "Dear Parent, this is a friendly reminder that school fees are outstanding. Please clear dues at your earliest. - The Educators";
+        } else if (type === 'general') {
+            msgArea.value = "Dear Parent, a parent-teacher meeting is scheduled for this week. Your presence is highly requested. - The Educators";
+        }
+        updateBulkInstructionCopy();
+    }
+
+    // Core execution upgraded with one-by-one sequential routing & auto mode
     function executeSMSSending() {
-        const msg = encodeURIComponent(document.getElementById('sms-message').value.trim());
-        if(!msg) { showToast("Type message", "bg-red-500"); return; }
-        selectedSMSList.forEach(s => window.open(`sms:${s.phone}?body=${msg}`, '_blank'));
-        closeSMSModal();
+        const rawMsg = document.getElementById('sms-message').value.trim();
+        const msg = encodeURIComponent(rawMsg);
+        
+        if (!msg) {
+            showToast("Please type a message first!", "bg-amber-600");
+            clearAutoSendTimers();
+            return;
+        }
+        if (selectedSMSList.length === 0) {
+            showToast("No recipients chosen.", "bg-amber-600");
+            clearAutoSendTimers();
+            return;
+        }
+
+        // Case 1: Single Student Mode
+        if (!isBulkLoopActive || selectedSMSList.length === 1) {
+            const phone = sanitizeSMSPhone(selectedSMSList[0].phone);
+            const smsUrl = `sms:${phone}?body=${msg}`;
+            window.open(smsUrl, '_blank');
+            showToast("Opening SMS App...", "bg-emerald-600");
+            closeSMSModal();
+            return;
+        }
+
+        // Case 2: Sequential Bulk Mode Active
+        const total = selectedSMSList.length;
+        if (bulkQueueIndex < total) {
+            const currentStudent = selectedSMSList[bulkQueueIndex];
+            const phone = sanitizeSMSPhone(currentStudent.phone);
+            
+            // Native default trigger per student to prevent group/MMS conversions
+            const smsUrl = `sms:${phone}?body=${msg}`;
+            window.open(smsUrl, '_blank');
+            
+            showToast(`Opening SMS for ${currentStudent.name}`, "bg-blue-600");
+            
+            // Advance Queue & Refresh Tracker UI
+            bulkQueueIndex++;
+            updateBulkTrackerUI();
+
+            // Next schedule logic if "Auto Send" checkbox is active
+            const autoActive = document.getElementById('auto-send-checkbox').checked;
+            if (autoActive && bulkQueueIndex < total) {
+                startAutoSendTimer();
+            }
+        } else {
+            // Finished sending all
+            showToast("All SMS sent successfully!", "bg-emerald-600");
+            closeSMSModal();
+        }
     }
 
-    async function updateCounts() { /* ... existing code ... */ }
-    async function loadReminders() { /* ... existing code ... */ }
-    async function loadCustomTemplates() { /* ... existing code ... */ }
-    async function saveStudent() { /* ... existing code ... */ }
-    function openAddModal() { /* ... existing code ... */ }
-    function closeModal() { /* ... existing code ... */ }
-    function viewStudent(id) { document.getElementById('search-input').value = id; performSearch(); }
-    async function showDetailedView(id, data) { /* ... implementation as before ... */ }
-    async function downloadBackup() { /* ... existing code ... */ }
-    async function downloadReport(f) { /* ... existing code ... */ }
-    // ... all other existing helper functions ...
-    window.onload = function() { loadCustomTemplates(); };
+    // On Load Initializations
+    window.onload = function() {
+        loadCustomTemplates();
+    }
 </script>
 </body>
 </html>
